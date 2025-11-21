@@ -15,6 +15,7 @@ class Pengguna extends Authenticatable
     protected $fillable = [
         'nama',
         'email',
+        'nisn',
         'hp',
         'password_hash',
         'role',

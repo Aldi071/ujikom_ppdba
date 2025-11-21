@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Hasil Seleksi PPDB - {{ date('d-m-Y') }}</title>
+    <title>Hasil Seleksi SPMB - {{ date('d-m-Y') }}</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 12px; }
         .header { text-align: center; margin-bottom: 20px; }
@@ -22,7 +22,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>HASIL SELEKSI PPDB</h1>
+        <h1>HASIL SELEKSI SPMB</h1>
         <p>SMK Example School</p>
         <p>Tanggal Cetak: {{ date('d/m/Y H:i') }}</p>
     </div>
@@ -71,7 +71,7 @@
     </table>
 
     <div class="footer">
-        <p>Dicetak oleh: Sistem PPDB | Total Data: {{ $hasilSeleksi->count() }}</p>
+        <p>Dicetak oleh: Sistem SPMB | Total Data: {{ $hasilSeleksi->count() }}</p>
     </div>
 </body>
 </html>

@@ -20,12 +20,12 @@ class LaporanController extends Controller
         // Statistik keuangan
         $totalPendapatan = DB::table('pendaftar as p')
             ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
-            ->where('p.status', 'PAID')
+            ->whereIn('p.status', ['PAID', 'LULUS'])
             ->whereBetween('p.tgl_verifikasi_payment', [$startDate, $endDate])
             ->sum('g.biaya_daftar');
 
         $totalPembayaranValid = DB::table('pendaftar')
-            ->where('status', 'PAID')
+            ->whereIn('status', ['PAID', 'LULUS'])
             ->whereBetween('tgl_verifikasi_payment', [$startDate, $endDate])
             ->count();
 
@@ -37,7 +37,7 @@ class LaporanController extends Controller
         // Data untuk chart pembayaran per gelombang
         $pembayaranPerGelombang = DB::table('pendaftar as p')
             ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
-            ->where('p.status', 'PAID')
+            ->whereIn('p.status', ['PAID', 'LULUS'])
             ->whereBetween('p.tgl_verifikasi_payment', [$startDate, $endDate])
             ->select('g.nama as gelombang', DB::raw('count(*) as total'), DB::raw('sum(g.biaya_daftar) as nominal'))
             ->groupBy('g.id', 'g.nama')
@@ -95,7 +95,7 @@ class LaporanController extends Controller
         // Data untuk PDF
         $totalPendapatan = DB::table('pendaftar as p')
             ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
-            ->where('p.status', 'PAID')
+            ->whereIn('p.status', ['PAID', 'LULUS'])
             ->whereBetween('p.tgl_verifikasi_payment', [$startDate, $endDate])
             ->sum('g.biaya_daftar');
 
@@ -121,9 +121,15 @@ class LaporanController extends Controller
             ->orderBy('p.tanggal_daftar', 'desc')
             ->get();
 
+        $totalPembayaranValid = DB::table('pendaftar')
+            ->whereIn('status', ['PAID', 'LULUS'])
+            ->whereBetween('tgl_verifikasi_payment', [$startDate, $endDate])
+            ->count();
+
         $pdf = PDF::loadView('keuangan.laporan.export-pdf', compact(
             'data',
             'totalPendapatan',
+            'totalPembayaranValid',
             'startDate',
             'endDate'
         ));
@@ -141,7 +147,7 @@ class LaporanController extends Controller
         // Data untuk PDF (sama seperti method export)
         $totalPendapatan = DB::table('pendaftar as p')
             ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
-            ->where('p.status', 'PAID')
+            ->whereIn('p.status', ['PAID', 'LULUS'])
             ->whereBetween('p.tgl_verifikasi_payment', [$startDate, $endDate])
             ->sum('g.biaya_daftar');
 
@@ -167,9 +173,15 @@ class LaporanController extends Controller
             ->orderBy('p.tanggal_daftar', 'desc')
             ->get();
 
+        $totalPembayaranValid = DB::table('pendaftar')
+            ->whereIn('status', ['PAID', 'LULUS'])
+            ->whereBetween('tgl_verifikasi_payment', [$startDate, $endDate])
+            ->count();
+
         $pdf = PDF::loadView('keuangan.laporan.export-pdf', compact(
             'data',
             'totalPendapatan',
+            'totalPembayaranValid',
             'startDate',
             'endDate'
         ));

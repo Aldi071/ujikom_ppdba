@@ -48,13 +48,11 @@
 
         <div class="topbar-divider d-none d-sm-block"></div>
 
-        <!-- Nav Item - User Information -->
         <li class="nav-item dropdown no-arrow">
             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                <img class="img-profile rounded-circle"
-                    src="img/undraw_profile.svg">
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ Auth::user()->nama ?? 'Admin' }}</span>
+                <img class="img-profile rounded-circle" src="{{ asset('sb-admin/img/undraw_profile.svg') }}">
             </a>
             <!-- Dropdown - User Information -->
             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -63,21 +61,15 @@
                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                     Profile
                 </a>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Settings
-                </a>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Activity Log
+                <a class="dropdown-item" href="{{ route('admin.log-aktivitas.index') }}">
+                    <i class="fas fa-history fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Log Aktivitas
                 </a>
                 <div class="dropdown-divider"></div>
-                <form action="{{ 
-                        Auth::user()->role === 'pendaftar' ? route('peserta.logout') : route('admin.logout') 
-                    }}" method="POST" id="logout-form" style="display: none;">
+                <form action="{{ route('admin.logout') }}" method="POST" id="logout-form" style="display: none;">
                     @csrf
                 </form>
-                <a class="dropdown-item" href="#" data-toggle="modal" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                     Logout
                 </a>

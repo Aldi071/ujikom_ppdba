@@ -17,14 +17,22 @@ class DashboardController extends Controller
             ->count();
 
         $pembayaranValid = DB::table('pendaftar')
-            ->where('status', 'PAID') // Sudah bayar
+            ->whereIn('status', ['PAID', 'LULUS']) // Sudah bayar dan lulus
             ->count();
 
         // Total nominal pembayaran yang sudah valid
-        $totalNominal = DB::table('pendaftar as p')
+        $totalNominalPaid = DB::table('pendaftar as p')
             ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
             ->where('p.status', 'PAID')
             ->sum('g.biaya_daftar');
+
+        // Tambahkan nominal pendaftar LULUS
+        $totalNominalLulus = DB::table('pendaftar as p')
+            ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
+            ->where('p.status', 'LULUS')
+            ->sum('g.biaya_daftar');
+
+        $totalNominal = $totalNominalPaid + $totalNominalLulus;
 
         $pending = DB::table('pendaftar')
             ->where('status', 'ADM_PASS') // Menunggu pembayaran

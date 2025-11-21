@@ -10,6 +10,25 @@
     .role-badge {
         font-size: 0.75rem;
     }
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+    .dropdown-item.text-danger:hover {
+        background-color: #f5c6cb;
+        color: #721c24 !important;
+    }
+    .dropdown-item-text {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
 </style>
 @endsection
 
@@ -142,36 +161,49 @@
                         </td>
                         <td>{{ $user->created_at->format('d M Y') }}</td>
                         <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ route('admin.akun.edit', $user->id) }}" 
-                                   class="btn btn-warning" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                
-                                @if($user->id !== auth()->user()->id)
-                                    <form action="{{ route('admin.akun.toggle-status', $user->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PUT')
-                                        <button type="submit" class="btn {{ $user->aktif ? 'btn-warning' : 'btn-success' }}" 
-                                                title="{{ $user->aktif ? 'Nonaktifkan' : 'Aktifkan' }}">
-                                            <i class="fas {{ $user->aktif ? 'fa-ban' : 'fa-check' }}"></i>
-                                        </button>
-                                    </form>
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                        data-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cog"></i> Aksi
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{{ route('admin.akun.edit', $user->id) }}">
+                                        <i class="fas fa-edit text-warning"></i> Edit Akun
+                                    </a>
                                     
-                                    <form action="{{ route('admin.akun.destroy', $user->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger" 
-                                                title="Hapus"
-                                                onclick="return confirm('Apakah Anda yakin ingin menghapus akun ini?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                @else
-                                    <button class="btn btn-secondary" disabled title="Tidak dapat mengubah akun sendiri">
-                                        <i class="fas fa-ban"></i>
-                                    </button>
-                                @endif
+                                    @if($user->id !== auth()->user()->id)
+                                        <div class="dropdown-divider"></div>
+                                        
+                                        <form action="{{ route('admin.akun.toggle-status', $user->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="dropdown-item" 
+                                                    onclick="return confirm('Yakin ingin {{ $user->aktif ? 'menonaktifkan' : 'mengaktifkan' }} akun ini?')">
+                                                @if($user->aktif)
+                                                    <i class="fas fa-ban text-warning"></i> Nonaktifkan
+                                                @else
+                                                    <i class="fas fa-check text-success"></i> Aktifkan
+                                                @endif
+                                            </button>
+                                        </form>
+                                        
+                                        <div class="dropdown-divider"></div>
+                                        
+                                        <form action="{{ route('admin.akun.destroy', $user->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="dropdown-item text-danger" 
+                                                    onclick="return confirm('PERINGATAN!\n\nApakah Anda yakin ingin menghapus akun ini?\n\nAksi ini tidak dapat dibatalkan!')">
+                                                <i class="fas fa-trash"></i> Hapus Akun
+                                            </button>
+                                        </form>
+                                    @else
+                                        <div class="dropdown-divider"></div>
+                                        <span class="dropdown-item-text text-muted">
+                                            <i class="fas fa-info-circle"></i> Akun Anda sendiri
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -186,7 +218,7 @@
         
         <!-- Pagination -->
         <div class="d-flex justify-content-center">
-            {{ $users->links() }}
+            {{ $users->links('custom.pagination') }}
         </div>
     </div>
 </div>

@@ -124,50 +124,19 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ route('admin.monitoring.pendaftar.detail', $pendaftar->id) }}" 
-                               class="btn btn-info btn-sm" title="Detail">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <button type="button" class="btn btn-warning btn-sm" 
-                                    data-toggle="modal" data-target="#statusModal{{ $pendaftar->id }}" title="Ubah Status">
-                                <i class="fas fa-edit"></i>
-                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                        data-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cog"></i> Aksi
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{{ route('admin.monitoring.pendaftar.detail', $pendaftar->id) }}">
+                                        <i class="fas fa-eye text-info"></i> Lihat Detail
+                                    </a>
+                                </div>
+                            </div>
                         </td>
                     </tr>
-
-                    <!-- Status Modal -->
-                    <div class="modal fade" id="statusModal{{ $pendaftar->id }}" tabindex="-1" role="dialog">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <form action="{{ route('admin.monitoring.pendaftar.update-status', $pendaftar->id) }}" method="POST">
-                                    @csrf
-                                    @method('PUT')
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Ubah Status Pendaftar</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="form-group">
-                                            <label for="status">Status</label>
-                                            <select class="form-control" id="status" name="status" required>
-                                                @foreach($statusList as $key => $value)
-                                                    <option value="{{ $key }}" {{ $pendaftar->status == $key ? 'selected' : '' }}>
-                                                        {{ $value }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary">Simpan</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                     @empty
                     <tr>
                         <td colspan="7" class="text-center">Tidak ada data pendaftar</td>
@@ -179,7 +148,7 @@
         
         <!-- Pagination -->
         <div class="d-flex justify-content-center">
-            {{ $pendaftars->links() }}
+            {{ $pendaftars->links('custom.pagination') }}
         </div>
     </div>
 </div>

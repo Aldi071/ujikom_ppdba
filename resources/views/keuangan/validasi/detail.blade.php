@@ -1,6 +1,10 @@
 {{-- resources/views/keuangan/validasi/detail.blade.php --}}
 @extends('keuangan.layouts.admin')
 
+@php
+use Illuminate\Support\Facades\DB;
+@endphp
+
 @section('content')
 <div class="container-fluid">
 
@@ -79,6 +83,24 @@
                 </div>
                 <div class="card-body">
                     @if($pendaftar->bukti_bayar_url)
+                        {{-- Cek jika ini adalah reupload --}}
+                        @php
+                            // Query langsung untuk cek catatan berkas
+                            $berkasInfo = DB::table('pendaftar_berkas')
+                                ->where('pendaftar_id', $pendaftar->id)
+                                ->where('jenis', 'BUKTI_BAYAR')
+                                ->first();
+                            $isReupload = $berkasInfo && strpos($berkasInfo->catatan, 'REUPLOAD') !== false;
+                        @endphp
+                        
+                        @if($isReupload)
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-redo"></i>
+                            <strong>Bukti Pembayaran Reupload</strong><br>
+                            <small>Pendaftar telah mengupload ulang bukti pembayaran yang sebelumnya ditolak. Silakan verifikasi kembali.</small>
+                        </div>
+                        @endif
+                        
                         <div class="text-center">
                             <img src="{{ asset('storage/' . $pendaftar->bukti_bayar_url) }}" 
                                  alt="Bukti Bayar" class="img-fluid img-thumbnail" style="max-height: 300px;">

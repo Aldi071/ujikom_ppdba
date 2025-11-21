@@ -6,7 +6,7 @@
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-laugh-wink"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">PPDB System</div>
+        <div class="sidebar-brand-text mx-3">SPMB System</div>
     </a>
 
     <!-- Divider -->
@@ -28,13 +28,7 @@
     </a>
 </li>
 
-<!-- Nav Item - Peta Sebaran -->
-<li class="nav-item {{ request()->is('kepsek/peta-sebaran') ? 'active' : '' }}">
-    <a class="nav-link" href="{{ route('kepsek.peta-sebaran') }}">
-        <i class="fas fa-fw fa-map"></i>
-        <span>Peta Sebaran</span>
-    </a>
-</li>
+
 
     <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">

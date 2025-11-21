@@ -9,6 +9,8 @@
     <meta name="author=">
 
     <title>Admin SPMB - Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v={{ time() }}" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v={{ time() }}" />
 
     <!-- Custom fonts for this template-->
     <link href="{{asset('sb-admin/vendor/fontawesome-free/css/all.min.css')}}" rel="stylesheet" type="text/css">
@@ -18,6 +20,7 @@
 
     <!-- Custom styles for this template-->
     <link href="{{asset('sb-admin/css/sb-admin-2.min.css')}}" rel="stylesheet">
+    <link href="{{asset('css/pagination.css')}}" rel="stylesheet">
 
     @yield('styles')
 </head>

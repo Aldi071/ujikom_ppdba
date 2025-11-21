@@ -44,7 +44,8 @@
             </a>
             <div class="dropdown-divider"></div>
             @if(Auth::user()->role === 'pendaftar')
-            <a href="{{ route('dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ route('peserta.dashboard') }}"><i class="fas fa-clipboard-check"></i> Status Pendaftaran</a>
+            <a href="#" onclick="toggleNotifikasi(event)"><i class="fas fa-bell"></i> Notifikasi <span id="notif-badge" class="badge badge-danger" style="display:none;">0</span></a>
             @else
             <a href="{{ route('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             @endif
@@ -100,8 +101,8 @@
         {{ Auth::user()->role }}
       </p>
       @if(Auth::user()->role === 'pendaftar')
-      <a href="{{ route('dashboard') }}" style="display: block; padding: 8px 0;">
-        <i class="fas fa-tachometer-alt"></i> Dashboard
+      <a href="{{ route('peserta.dashboard') }}" style="display: block; padding: 8px 0;">
+        <i class="fas fa-clipboard-check"></i> Status Pendaftaran
       </a>
       @else
       <a href="{{ route('admin.dashboard') }}" style="display: block; padding: 8px 0;">

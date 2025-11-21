@@ -24,12 +24,12 @@ class UserController extends Controller
             });
         }
 
-        // Filter berdasarkan role
+        // Filter berdasarkan role (single)
         if ($request->has('role') && $request->role != '') {
             $query->where('role', $request->role);
         }
 
-        // Filter berdasarkan status
+        // Filter berdasarkan status (single)
         if ($request->has('status') && $request->status != '') {
             $query->where('aktif', $request->status);
         }

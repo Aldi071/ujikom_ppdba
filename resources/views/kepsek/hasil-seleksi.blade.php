@@ -5,10 +5,10 @@
 
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Hasil Seleksi PPDB</h1>
+        <h1 class="h3 mb-0 text-gray-800">Hasil Seleksi SPMB</h1>
         <div>
             <a href="{{ route('kepsek.hasil-seleksi.export', request()->all()) }}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
-                <i class="fas fa-file-excel fa-sm text-white-50"></i> Export Excel
+                <i class="fas fa-file-pdf fa-sm text-white-50"></i> Export PDF
             </a>
             <a href="{{ route('kepsek.hasil-seleksi.print', request()->all()) }}" target="_blank" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
                 <i class="fas fa-print fa-sm text-white-50"></i> Cetak
@@ -161,6 +161,7 @@
                             <th>Gelombang</th>
                             <th>Status</th>
                             <th>Tanggal Daftar</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,6 +194,15 @@
                                 @endif
                             </td>
                             <td>{{ \Carbon\Carbon::parse($pendaftar->tanggal_daftar)->format('d/m/Y') }}</td>
+                            <td>
+                                @if(in_array($pendaftar->status, ['PAID', 'ADM_PASS']))
+                                    <a href="{{ route('kepsek.seleksi.show', $pendaftar->id) }}" class="btn btn-sm btn-primary" title="Input Keputusan Seleksi">
+                                        <i class="fas fa-check-square"></i> Seleksi
+                                    </a>
+                                @elseif(in_array($pendaftar->status, ['LULUS', 'TIDAK_LULUS', 'CADANGAN']))
+                                    <span class="badge badge-info">Sudah Diputus</span>
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr>
@@ -211,7 +221,7 @@
                     </div>
                     <div class="col-md-6 text-right">
                         <a href="{{ route('kepsek.hasil-seleksi.export', request()->all()) }}" class="btn btn-success btn-sm">
-                            <i class="fas fa-file-excel"></i> Export Excel
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </a>
                         <a href="{{ route('kepsek.hasil-seleksi.print', request()->all()) }}" target="_blank" class="btn btn-primary btn-sm">
                             <i class="fas fa-print"></i> Cetak

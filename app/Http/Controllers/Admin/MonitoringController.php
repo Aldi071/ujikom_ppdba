@@ -76,19 +76,6 @@ class MonitoringController extends Controller
         return view('admin.monitoring-detail', compact('pendaftar'));
     }
 
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:DRAFT,SUBMIT,ADM_PASS,ADM_REJECT,PAID,LULUS,TIDAK_LULUS,CADANGAN'
-        ]);
-
-        $pendaftar = Pendaftar::findOrFail($id);
-        $pendaftar->update([
-            'status' => $request->status,
-            'user_verifikasi_adm' => auth()->user()->name,
-            'tgl_verifikasi_adm' => now()
-        ]);
-
-        return redirect()->route('admin.monitoring.pendaftar.index')->with('success', 'Status pendaftar berhasil diperbarui.');
-    }
+    // Method updateStatus dipindahkan ke Verifikator
+    // Admin hanya bisa melihat data (view only)
 }

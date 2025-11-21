@@ -1,15 +1,28 @@
 {{-- resources/views/verifikator/verifikator.blade.php --}}
 @extends('verifikator.layouts.admin')
 
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container-fluid">
 
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Dashboard Verifikator</h1>
-        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-            <i class="fas fa-download fa-sm text-white-50"></i> Generate Report
-        </a>
     </div>
 
     <!-- Content Row -->
@@ -57,8 +70,17 @@
                                             <td>{{ $pendaftar->nama }}</td>
                                             <td>{{ $pendaftar->jurusan }}</td>
                                             <td>
-                                                <a href="{{ route('verifikator.detail', $pendaftar->id) }}" 
-                                                   class="btn btn-sm btn-primary">Cek</a>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                                            data-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-cog"></i> Aksi
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{{ route('verifikator.detail', $pendaftar->id) }}">
+                                                            <i class="fas fa-eye text-info"></i> Cek Detail
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @empty

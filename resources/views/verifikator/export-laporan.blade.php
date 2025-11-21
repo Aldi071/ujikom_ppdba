@@ -21,7 +21,7 @@
 </head>
 <body>
     <div class="header">
-        <h2>LAPORAN PENDAFTARAN PPDB</h2>
+        <h2>LAPORAN PENDAFTARAN SPMB</h2>
         <p>Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</p>
         <p>Tanggal Cetak: {{ now()->format('d/m/Y H:i') }}</p>
     </div>

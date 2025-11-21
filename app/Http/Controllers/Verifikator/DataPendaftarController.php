@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Verifikator;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pendaftar;
+use App\Services\WhatsAppService;
 
 class DataPendaftarController extends Controller
 {
@@ -109,14 +111,8 @@ class DataPendaftarController extends Controller
             ->get();
 
         $statusList = [
-            'DRAFT' => 'Draft',
-            'SUBMIT' => 'Menunggu Verifikasi',
             'ADM_PASS' => 'Berkas Diterima',
-            'ADM_REJECT' => 'Berkas Ditolak',
-            'PAID' => 'Sudah Bayar',
-            'LULUS' => 'Lulus',
-            'TIDAK_LULUS' => 'Tidak Lulus',
-            'CADANGAN' => 'Cadangan'
+            'ADM_REJECT' => 'Berkas Ditolak'
         ];
 
         return view('verifikator.detail-pendaftar', compact('pendaftar', 'berkas', 'statusList'));
@@ -124,38 +120,103 @@ class DataPendaftarController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|in:ADM_PASS,ADM_REJECT',
-            'catatan' => 'nullable|string|max:255'
-        ]);
+        try {
+            // Validasi status - verifikator hanya bisa set ADM_PASS/ADM_REJECT
+            $allowedStatus = ['ADM_PASS', 'ADM_REJECT'];
+            if (!in_array($request->status, $allowedStatus)) {
+                return redirect()->back()->with('error', 'Status tidak valid');
+            }
 
-        $updateData = [
-            'status' => $request->status,
-            'user_verifikasi_adm' => auth()->user()->name,
-            'tgl_verifikasi_adm' => now(),
-            'updated_at' => now()
-        ];
+            // Update langsung tanpa transaction dulu untuk test
+            $updated = DB::table('pendaftar')
+                ->where('id', $id)
+                ->update([
+                    'status' => $request->status,
+                    'user_verifikasi_adm' => auth()->user()->name ?? 'System',
+                    'tgl_verifikasi_adm' => now(),
+                    'catatan_verifikasi' => $request->catatan,
+                    'updated_at' => now()
+                ]);
 
-        DB::table('pendaftar')->where('id', $id)->update($updateData);
+            if ($updated) {
+                // Jika status di-set ke ADM_REJECT, update record berkas yang dipilih
+                if ($request->status === 'ADM_REJECT') {
+                    $rejected = $request->input('rejected_berkas', []);
+                    $berkasNotes = $request->input('berkas_catatan', []);
 
-        // Log aktivitas
-        DB::table('log_aktivitas')->insert([
-            'user_id' => auth()->id(),
-            'aksi' => 'UPDATE_STATUS',
-            'objek' => 'PENDAFTAR',
-            'objek_data' => json_encode([
-                'pendaftar_id' => $id,
-                'status_sebelum' => DB::table('pendaftar')->where('id', $id)->value('status'),
-                'status_sesudah' => $request->status,
-                'catatan' => $request->catatan
-            ]),
-            'waktu' => now(),
-            'ip' => $request->ip(),
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+                    if (is_array($rejected) && count($rejected) > 0) {
+                        foreach ($rejected as $berkasId) {
+                            $note = isset($berkasNotes[$berkasId]) ? trim($berkasNotes[$berkasId]) : '';
+                            if ($note === '') {
+                                $note = 'Ditolak oleh verifikator';
+                            }
 
-        return redirect()->route('verifikator.data-pendaftar')
-            ->with('success', 'Status pendaftar berhasil diupdate.');
+                            // Update tabel pendafar_berkas: set valid = 0 dan catatan
+                            DB::table('pendaftar_berkas')
+                                ->where('id', $berkasId)
+                                ->where('pendaftar_id', $id)
+                                ->update([
+                                    'valid' => 0,
+                                    'catatan' => $note,
+                                    'updated_at' => now()
+                                ]);
+                        }
+                    }
+                }
+
+                // Jika status di-set ke ADM_PASS, tandai semua berkas sebagai valid (diterima oleh verifikator)
+                if ($request->status === 'ADM_PASS') {
+                    DB::table('pendaftar_berkas')
+                        ->where('pendaftar_id', $id)
+                        ->update([
+                            'valid' => 1,
+                            'catatan' => 'Diterima oleh verifikator',
+                            'updated_at' => now()
+                        ]);
+                }
+                // Kirim WhatsApp ke pendaftar
+                $pendaftar = DB::table('pendaftar as p')
+                    ->join('pendaftar_data_siswa as pds', 'p.id', '=', 'pds.pendaftar_id')
+                    ->join('pengguna as pg', 'p.user_id', '=', 'pg.id')
+                    ->where('p.id', $id)
+                    ->select('p.no_pendaftaran', 'pds.nama', 'pg.hp')
+                    ->first();
+                    
+                if ($pendaftar && $pendaftar->hp) {
+                    $statusMessages = [
+                        'ADM_PASS' => '✅ BERKAS DITERIMA',
+                        'ADM_REJECT' => '❌ BERKAS DITOLAK', 
+                        'LULUS' => '🎉 SELAMAT! ANDA DITERIMA',
+                        'TIDAK_LULUS' => '😔 MOHON MAAF, ANDA TIDAK DITERIMA',
+                        'CADANGAN' => '⏳ ANDA MASUK DAFTAR CADANGAN'
+                    ];
+                    
+                    if (isset($statusMessages[$request->status])) {
+                        $message = "Halo {$pendaftar->nama},\n\n";
+                        $message .= "{$statusMessages[$request->status]}\n\n";
+                        $message .= "No. Pendaftaran: {$pendaftar->no_pendaftaran}\n";
+                        
+                        if ($request->catatan) {
+                            $message .= "Catatan: {$request->catatan}\n\n";
+                        }
+                        
+                        $message .= "Silakan cek detail di website SPMB BAKNUS 666.\n\n";
+                        $message .= "Terima kasih.";
+                        
+                        $whatsapp = new WhatsAppService();
+                        $whatsapp->sendMessage($pendaftar->hp, $message);
+                    }
+                }
+                
+                return redirect()->route('verifikator.detail-pendaftar', $id)
+                    ->with('success', 'Status berhasil diupdate ke: ' . $request->status);
+            } else {
+                return redirect()->back()->with('error', 'Gagal update status - data tidak ditemukan');
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Error updating status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
 }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Pendaftaran PPDB</title>
+    <title>Laporan Pendaftaran SPMB</title>
     <style>
         /* Reset dan base styles */
         * { 
@@ -49,31 +49,25 @@
             margin-bottom: 20px;
         }
         
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
         }
-        
-        .info-item {
+        .info-table td {
+            border: 1px solid #dee2e6;
             text-align: center;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            border: 1px solid #e9ecef;
+            padding: 8px 4px;
+            font-size: 12px;
         }
-        
         .info-number {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #2c3e50;
         }
-        
         .info-label {
             font-size: 11px;
             color: #6c757d;
-            margin-top: 5px;
         }
         
         /* Tables */
@@ -173,7 +167,7 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <h1>LAPORAN PENDAFTARAN PPDB</h1>
+        <h1>LAPORAN PENDAFTARAN SPMB</h1>
         <div class="subtitle">Sistem Penerimaan Peserta Didik Baru</div>
         <div class="subtitle">
             Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
@@ -182,24 +176,26 @@
 
     <!-- Info Box -->
     <div class="info-box">
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-number">{{ $totalPendaftar }}</div>
-                <div class="info-label">TOTAL PENDAFTAR</div>
-            </div>
-            <div class="info-item">
-                <div class="info-number">{{ $menungguVerifikasi }}</div>
-                <div class="info-label">MENUNGGU VERIFIKASI</div>
-            </div>
-            <div class="info-item">
-                <div class="info-number">{{ $diterima }}</div>
-                <div class="info-label">DI TERIMA</div>
-            </div>
-            <div class="info-item">
-                <div class="info-number">{{ $ditolak }}</div>
-                <div class="info-label">DI TOLAK</div>
-            </div>
-        </div>
+        <table class="info-table">
+            <tr>
+                <td>
+                    <div class="info-number">{{ $totalPendaftar }}</div>
+                    <div class="info-label">TOTAL PENDAFTAR</div>
+                </td>
+                <td>
+                    <div class="info-number">{{ $menungguVerifikasi }}</div>
+                    <div class="info-label">MENUNGGU VERIFIKASI</div>
+                </td>
+                <td>
+                    <div class="info-number">{{ $diterima }}</div>
+                    <div class="info-label">DI TERIMA</div>
+                </td>
+                <td>
+                    <div class="info-number">{{ $ditolak }}</div>
+                    <div class="info-label">DI TOLAK</div>
+                </td>
+            </tr>
+        </table>
         <div class="text-right">
             <small>Dicetak pada: {{ now()->format('d/m/Y H:i') }}</small>
         </div>
@@ -313,7 +309,7 @@
 
     <!-- Footer -->
     <div class="footer">
-        <div>Dokumen ini dicetak otomatis dari Sistem PPDB</div>
+        <div>Dokumen ini dicetak otomatis dari Sistem SPMB</div>
         <div>Halaman 1/1</div>
     </div>
 </body>

@@ -12,6 +12,7 @@ use App\Models\PendaftarAsalSekolah;
 use App\Models\Gelombang;
 use App\Models\PendaftarDataSiswa;
 use App\Models\Wilayah;
+use App\Services\WhatsAppService;
 
 class KepsekController extends Controller
 {
@@ -37,10 +38,12 @@ class KepsekController extends Controller
             $lulusSeleksi = Pendaftar::where('status', 'LULUS')->count();
             $tidakLulus = Pendaftar::where('status', 'TIDAK_LULUS')->count();
             
-            // Data Kuota
-            $totalKuota = Jurusan::sum('kuota');
-            $kuotaTersedia = $totalKuota - $lulusSeleksi;
-            $keterisianKuota = $totalKuota > 0 ? round(($lulusSeleksi / $totalKuota) * 100, 1) : 0;
+            // Data Kuota (hanya jurusan aktif)
+            $totalKuota = Jurusan::where('aktif', 1)->sum('kuota');
+            // Kuota terisi = yang sudah lulus seleksi final (status LULUS)
+            $kuotaTerisi = Pendaftar::where('status', 'LULUS')->count();
+            $kuotaTersedia = max(0, $totalKuota - $kuotaTerisi);
+            $keterisianKuota = $totalKuota > 0 ? round(($kuotaTerisi / $totalKuota) * 100, 1) : 0;
 
             // Rasio Terverifikasi
             $rasioTerverifikasiAdm = $totalPendaftar > 0 ? round(($lulusAdministrasi / $totalPendaftar) * 100, 1) : 0;
@@ -138,6 +141,7 @@ class KepsekController extends Controller
                 'sudahBayar',
                 'lulusSeleksi',
                 'tidakLulus',
+                'totalKuota',
                 'kuotaTersedia',
                 'keterisianKuota',
                 'rasioTerverifikasiAdm',
@@ -161,6 +165,7 @@ class KepsekController extends Controller
                 'sudahBayar' => 0,
                 'lulusSeleksi' => 0,
                 'tidakLulus' => 0,
+                'totalKuota' => 0,
                 'kuotaTersedia' => 0,
                 'keterisianKuota' => 0,
                 'rasioTerverifikasiAdm' => 0,
@@ -316,82 +321,126 @@ public function printHasilSeleksi(Request $request)
     }
 }
 
-public function petaSebaran(Request $request)
+/**
+ * Show form untuk final selection (LULUS/TIDAK_LULUS/CADANGAN)
+ */
+public function showSeleksi($id)
 {
-    // Cek authentication dan role
-    if (!Auth::check()) {
-        return redirect()->route('admin.login');
+    if (!Auth::check() || Auth::user()->role !== 'kepsek') {
+        abort(403, 'Unauthorized access');
     }
 
-    $user = Auth::user();
-    
-    if ($user->role !== 'kepsek') {
-        abort(403, 'Unauthorized access. Hanya Kepala Sekolah yang dapat mengakses halaman ini.');
+    $pendaftar = DB::table('pendaftar as p')
+        ->join('pendaftar_data_siswa as pds', 'p.id', '=', 'pds.pendaftar_id')
+        ->join('jurusan as j', 'p.jurusan_id', '=', 'j.id')
+        ->join('gelombang as g', 'p.gelombang_id', '=', 'g.id')
+        ->leftJoin('pendaftar_data_ortu as pdo', 'p.id', '=', 'pdo.pendaftar_id')
+        ->leftJoin('pendaftar_asal_sekolah as pas', 'p.id', '=', 'pas.pendaftar_id')
+        ->select(
+            'p.*',
+            'pds.*',
+            'j.nama as jurusan',
+            'g.nama as gelombang',
+            'pdo.*',
+            'pas.*'
+        )
+        ->where('p.id', $id)
+        ->first();
+
+    if (!$pendaftar) {
+        return redirect()->route('kepsek.hasil-seleksi')->with('error', 'Data pendaftar tidak ditemukan');
+    }
+
+    // Hanya bisa di-seleksi jika sudah ADM_PASS dan PAID
+    if (!in_array($pendaftar->status, ['PAID', 'ADM_PASS'])) {
+        return redirect()->route('kepsek.hasil-seleksi')
+            ->with('error', 'Pendaftar harus sudah terverifikasi dan membayar untuk diseleksi');
+    }
+
+    $statusList = [
+        'DRAFT' => 'Draft',
+        'SUBMIT' => 'Menunggu Verifikasi',
+        'ADM_PASS' => 'Berkas Diterima',
+        'ADM_REJECT' => 'Berkas Ditolak',
+        'PAID' => 'Sudah Bayar',
+        'LULUS' => 'Lulus',
+        'TIDAK_LULUS' => 'Tidak Lulus',
+        'CADANGAN' => 'Cadangan'
+    ];
+
+    return view('kepsek.seleksi-pendaftar', compact('pendaftar', 'statusList'));
+}
+
+/**
+ * Update final selection status (LULUS/TIDAK_LULUS/CADANGAN)
+ */
+public function updateSeleksi(Request $request, $id)
+{
+    if (!Auth::check() || Auth::user()->role !== 'kepsek') {
+        abort(403, 'Unauthorized access');
     }
 
     try {
-        // Filter berdasarkan jurusan
-        $jurusan_id = $request->get('jurusan_id');
-        $status = $request->get('status');
-
-        // Query data untuk peta
-        $query = PendaftarDataSiswa::with([
-            'pendaftar.jurusan',
-            'pendaftar.gelombang',
-            'wilayah'
-        ])->whereNotNull('lat')
-          ->whereNotNull('lng');
-
-        // Filter berdasarkan jurusan
-        if ($jurusan_id) {
-            $query->whereHas('pendaftar', function($q) use ($jurusan_id) {
-                $q->where('jurusan_id', $jurusan_id);
-            });
+        // Validasi status - kepsek hanya bisa set LULUS/TIDAK_LULUS/CADANGAN
+        $allowedStatus = ['LULUS', 'TIDAK_LULUS', 'CADANGAN'];
+        if (!in_array($request->status, $allowedStatus)) {
+            return redirect()->back()->with('error', 'Status tidak valid');
         }
 
-        // Filter berdasarkan status
-        if ($status && in_array($status, ['LULUS', 'TIDAK_LULUS', 'CADANGAN', 'PAID', 'ADM_PASS'])) {
-            $query->whereHas('pendaftar', function($q) use ($status) {
-                $q->where('status', $status);
-            });
+        $updated = DB::table('pendaftar')
+            ->where('id', $id)
+            ->update([
+                'status' => $request->status,
+                'user_verifikasi_adm' => auth()->user()->name ?? 'System',
+                'tgl_verifikasi_adm' => now(),
+                'catatan_verifikasi' => $request->catatan,
+                'updated_at' => now()
+            ]);
+
+        if ($updated) {
+            // Kirim WhatsApp ke pendaftar
+            $pendaftar = DB::table('pendaftar as p')
+                ->join('pendaftar_data_siswa as pds', 'p.id', '=', 'pds.pendaftar_id')
+                ->join('pengguna as pg', 'p.user_id', '=', 'pg.id')
+                ->where('p.id', $id)
+                ->select('p.no_pendaftaran', 'pds.nama', 'pg.hp')
+                ->first();
+                
+            if ($pendaftar && $pendaftar->hp) {
+                $statusMessages = [
+                    'LULUS' => '🎉 SELAMAT! ANDA DITERIMA',
+                    'TIDAK_LULUS' => '😔 MOHON MAAF, ANDA TIDAK DITERIMA',
+                    'CADANGAN' => '⏳ ANDA MASUK DAFTAR CADANGAN'
+                ];
+                
+                if (isset($statusMessages[$request->status])) {
+                    $message = "Halo {$pendaftar->nama},\n\n";
+                    $message .= "{$statusMessages[$request->status]}\n\n";
+                    $message .= "No. Pendaftaran: {$pendaftar->no_pendaftaran}\n";
+                    
+                    if ($request->catatan) {
+                        $message .= "Catatan: {$request->catatan}\n\n";
+                    }
+                    
+                    $message .= "Silakan cek detail di website SPMB BAKNUS 666.\n\n";
+                    $message .= "Terima kasih.";
+                    
+                    $whatsapp = new WhatsAppService();
+                    $whatsapp->sendMessage($pendaftar->hp, $message);
+                }
+            }
+            
+            return redirect()->route('kepsek.hasil-seleksi')
+                ->with('success', 'Status seleksi berhasil diupdate ke: ' . $request->status);
+        } else {
+            return redirect()->back()->with('error', 'Gagal update status - data tidak ditemukan');
         }
-
-        $dataPeta = $query->get();
-
-        // Data untuk filter
-        $jurusanList = Jurusan::where('aktif', 1)->get();
         
-        // Statistik untuk sidebar
-        $totalDataPeta = $dataPeta->count();
-        $totalPendaftar = Pendaftar::count();
-        $persentaseDataPeta = $totalPendaftar > 0 ? round(($totalDataPeta / $totalPendaftar) * 100, 1) : 0;
-
-        // Data untuk heatmap/clustering
-        $clusterData = $dataPeta->groupBy(function($item) {
-            return round($item->lat, 2) . ',' . round($item->lng, 2);
-        })->map(function($cluster) {
-            return [
-                'lat' => $cluster->first()->lat,
-                'lng' => $cluster->first()->lng,
-                'count' => $cluster->count(),
-                'pendaftars' => $cluster->take(3) // Ambil 3 data pertama untuk info window
-            ];
-        });
-
-        return view('kepsek.peta-sebaran', compact(
-            'dataPeta',
-            'jurusanList',
-            'jurusan_id',
-            'status',
-            'totalDataPeta',
-            'totalPendaftar',
-            'persentaseDataPeta',
-            'clusterData'
-        ));
-
     } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        \Log::error('Error updating seleksi status: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
     }
-    
 }
+
+
 }

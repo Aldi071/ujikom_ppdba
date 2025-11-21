@@ -9,6 +9,7 @@
     <meta name="author" content="">
 
     <title>SB Admin 2 - Dashboard Verifikator</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}" />
 
     <!-- Custom fonts for this template-->
     <link href="{{asset('sb-admin/vendor/fontawesome-free/css/all.min.css')}}" rel="stylesheet" type="text/css">
@@ -16,6 +17,9 @@
 
     <!-- Custom styles for this template-->
     <link href="{{asset('sb-admin/css/sb-admin-2.min.css')}}" rel="stylesheet">
+    <link href="{{asset('css/pagination.css')}}" rel="stylesheet">
+
+    @yield('styles')
 </head>
 
 <body id="page-top">

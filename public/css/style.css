@@ -452,6 +452,64 @@ body {
     z-index: 0;
 }
 
+/* Hero with video background - only for index page */
+.hero-with-video {
+    padding: 150px 0 100px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+}
+
+.hero-with-video::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        rgba(0, 123, 255, 0.4),
+        rgba(255, 255, 255, 0.3)
+    );
+    z-index: -1;
+}
+
+.hero-with-video h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--electric-blue);
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-with-video .hero-slogan {
+    font-size: 1.5rem;
+    color: var(--text-dark);
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.hero-with-video .hero-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 .hero-content {
     position: relative;
     z-index: 1;

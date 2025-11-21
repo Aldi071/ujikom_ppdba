@@ -30,7 +30,7 @@ class LaporanController extends Controller
         }
 
         if ($request->has('tanggal_selesai') && $request->tanggal_selesai != '') {
-            $query->whereDate('tanggal_daftar', '<=', $request->tanggal_selesai); // PERBAIKAN: ganti tanggal_selesai menjadi tanggal_daftar
+            $query->whereDate('tanggal_daftar', '<=', $request->tanggal_selesai);
         }
 
         // Filter berdasarkan jurusan
@@ -283,8 +283,4 @@ class LaporanController extends Controller
         return $statusMap[$status] ?? $status;
     }
 
-    public function keuangan()
-    {
-        return view('admin.laporan-keuangan');
-    }
 }

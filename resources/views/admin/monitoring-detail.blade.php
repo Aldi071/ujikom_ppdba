@@ -1,5 +1,21 @@
 @extends('admin.layouts.main')
 
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+</style>
+@endsection
+
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -7,6 +23,10 @@
     <a href="{{ route('admin.monitoring.pendaftar.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
         <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali
     </a>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> <strong>Mode View Only:</strong> Untuk melakukan verifikasi dan update status, silakan gunakan menu Verifikator.
 </div>
 
 <div class="row">
@@ -211,9 +231,17 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ asset('storage/' . $berkas->url) }}" target="_blank" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-download"></i> Download
-                                    </a>
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                                data-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-cog"></i> Aksi
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="{{ asset('storage/' . $berkas->url) }}" target="_blank">
+                                                <i class="fas fa-download text-primary"></i> Download Berkas
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             @empty

@@ -15,8 +15,6 @@ use App\Http\Controllers\DepanController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Kepsek\KepsekController;
 
-// Debug routes were removed for security
-
 /*
 |--------------------------------------------------------------------------
 | AUTH ROUTES - PESERTA
@@ -43,9 +41,7 @@ Route::post('/admin/logout', [AuthController::class, 'logoutAdmin'])->name('admi
 |--------------------------------------------------------------------------
 */
 
-Route::get('/peserta/dashboard', function () {
-    return redirect('/')->with('success', 'Selamat datang di dashboard peserta!');
-})->name('peserta.dashboard')->middleware('auth');
+Route::get('/peserta/dashboard', [PengumumanController::class, 'dashboard'])->name('peserta.dashboard')->middleware('auth');
 
 Route::get('/', [DepanController::class, 'index'])->name('home');
 Route::get('/akademik', fn() => view('depan.pages.akademik'))->name('akademik');
@@ -67,17 +63,35 @@ Route::prefix('pendaftaran')->name('pendaftaran.')->group(function () {
     Route::get('/check-nisn/{nisn}', [PendaftaranController::class, 'checkNisn'])->name('checkNisn');
     Route::get('/check-email/{email}', [PendaftaranController::class, 'checkEmail'])->name('checkEmail');
     Route::get('/check-pending', [PendaftaranController::class, 'checkPendingRegistration'])->name('check-pending');
+    
+    // API Wilayah
+    Route::get('/api/provinsi', [PendaftaranController::class, 'getProvinsi'])->name('api.provinsi');
+    Route::get('/api/kabupaten/{provinsi}', [PendaftaranController::class, 'getKabupaten'])->name('api.kabupaten');
+    Route::get('/api/kecamatan/{provinsi}/{kabupaten}', [PendaftaranController::class, 'getKecamatan'])->name('api.kecamatan');
+    Route::get('/api/kelurahan/{provinsi}/{kabupaten}/{kecamatan}', [PendaftaranController::class, 'getKelurahan'])->name('api.kelurahan');
+    Route::get('/api/koordinat-kecamatan/{provinsi}/{kabupaten}/{kecamatan}', [PendaftaranController::class, 'getKoordinatKecamatan'])->name('api.koordinat-kecamatan');
+});
+
+// API Notifikasi untuk pendaftar
+Route::middleware(['auth'])->group(function () {
+    Route::get('/api/notifikasi', [PengumumanController::class, 'getNotifikasi'])->name('api.notifikasi');
+    Route::post('/api/notifikasi/baca', [PengumumanController::class, 'bacaNotifikasi'])->name('api.notifikasi.baca');
 });
 
 // Pengumuman
 Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('pengumuman');
 Route::post('/pengumuman/check', [PengumumanController::class, 'checkStatus'])->name('pengumuman.check');
 Route::post('/pengumuman/upload-bukti', [PengumumanController::class, 'uploadBuktiPembayaran'])->name('pengumuman.upload-bukti');
+Route::post('/pengumuman/reupload-berkas', [PengumumanController::class, 'reUploadBerkas'])->name('pengumuman.reupload-berkas');
+Route::post('/pengumuman/reupload-berkas-multiple', [PengumumanController::class, 'reUploadMultipleBerkas'])->name('pengumuman.reupload-multiple');
 Route::get('/pengumuman/siswa-diterima', [PengumumanController::class, 'getSiswaDiterima'])->name('pengumuman.siswa-diterima');
+Route::get('/kartu-pendaftaran/{no_pendaftaran}', [PengumumanController::class, 'exportKartuPendaftaran'])->name('kartu-pendaftaran.export');
 
 // Informasi
 Route::get('/informasi', [InformasiController::class, 'index'])->name('informasi');
 Route::get('/informasi/kuota', [InformasiController::class, 'getKuotaData'])->name('informasi.kuota');
+Route::get('/test-wave', [InformasiController::class, 'testWave'])->name('test.wave');
+Route::get('/test-wave/{mode}', [InformasiController::class, 'setTestMode'])->name('test.wave.mode');
 
 /*
 |--------------------------------------------------------------------------
@@ -148,6 +162,10 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::prefix('admin')->name('admin.')->group(function () {
 
+        // LOG AKTIVITAS
+        Route::resource('log-aktivitas', \App\Http\Controllers\Admin\LogAktivitasController::class);
+        Route::get('/log-aktivitas/export', [\App\Http\Controllers\Admin\LogAktivitasController::class, 'export'])->name('log-aktivitas.export');
+
         // MASTER DATA
         Route::prefix('master')->name('master.')->group(function () {
             Route::get('/jurusan', [MasterDataController::class, 'jurusan'])->name('jurusan');
@@ -181,11 +199,10 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/wilayah/get-kelurahan', [MasterDataController::class, 'getKelurahanByKecamatan'])->name('wilayah.get-kelurahan');
         });
 
-        // MONITORING
+        // MONITORING (View Only)
         Route::prefix('monitoring-pendaftar')->name('monitoring.pendaftar.')->group(function () {
             Route::get('/', [MonitoringController::class, 'index'])->name('index');
             Route::get('/detail/{id}', [MonitoringController::class, 'show'])->name('detail');
-            Route::put('/update-status/{id}', [MonitoringController::class, 'updateStatus'])->name('update-status');
         });
 
         // PETA
@@ -199,7 +216,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/pendaftar', [LaporanController::class, 'pendaftar'])->name('pendaftar');
             Route::get('/pendaftar/export', [LaporanController::class, 'exportPendaftar'])->name('pendaftar.export');
             Route::get('/pendaftar/export-manual', [LaporanController::class, 'exportPendaftarManual'])->name('pendaftar.export-manual');
-            Route::get('/keuangan', [LaporanController::class, 'keuangan'])->name('keuangan');
         });
 
         // USER MANAGEMENT
@@ -224,7 +240,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/hasil-seleksi', [KepsekController::class, 'hasilSeleksi'])->name('hasil-seleksi');
         Route::get('/hasil-seleksi/export', [KepsekController::class, 'exportHasilSeleksi'])->name('hasil-seleksi.export');
         Route::get('/hasil-seleksi/print', [KepsekController::class, 'printHasilSeleksi'])->name('hasil-seleksi.print');
-        Route::get('/peta-sebaran', [KepsekController::class, 'petaSebaran'])->name('peta-sebaran');
+        
+        // Final Selection
+        Route::get('/pendaftar/{id}/seleksi', [KepsekController::class, 'showSeleksi'])->name('seleksi.show');
+        Route::put('/pendaftar/{id}/seleksi', [KepsekController::class, 'updateSeleksi'])->name('seleksi.update');
     });
 
-}); // ⬅️ MENUTUP middleware(['auth'])
+});

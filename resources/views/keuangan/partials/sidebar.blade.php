@@ -7,7 +7,7 @@
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-laugh-wink"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">Keuangan <sup>PPDB</sup></div>
+        <div class="sidebar-brand-text mx-3">Keuangan <sup>SPMB</sup></div>
     </a>
 
     <!-- Divider -->

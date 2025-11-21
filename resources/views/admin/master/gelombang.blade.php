@@ -1,6 +1,26 @@
 {{-- resources/views/admin/master/gelombang.blade.php --}}
 @extends('admin.layouts.main')
 
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+    .dropdown-item.text-danger:hover {
+        background-color: #f5c6cb;
+        color: #721c24 !important;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container-fluid">
 
@@ -162,21 +182,25 @@
                                             <span class="badge badge-{{ $badge }}">{{ $status }}</span>
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{{ route('admin.master.gelombang.edit', $item->id) }}" 
-                                                   class="btn btn-warning" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('admin.master.gelombang.destroy', $item->id) }}" 
-                                                      method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger" 
-                                                            onclick="return confirm('Apakah Anda yakin ingin menghapus gelombang ini?')"
-                                                            title="Hapus">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                            <div class="dropdown">
+                                                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                                        data-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-cog"></i> Aksi
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="{{ route('admin.master.gelombang.edit', $item->id) }}">
+                                                        <i class="fas fa-edit text-warning"></i> Edit Gelombang
+                                                    </a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <form action="{{ route('admin.master.gelombang.destroy', $item->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="dropdown-item text-danger" 
+                                                                onclick="return confirm('Apakah Anda yakin ingin menghapus gelombang ini?')">
+                                                            <i class="fas fa-trash"></i> Hapus Gelombang
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>

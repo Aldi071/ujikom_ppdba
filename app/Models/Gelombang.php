@@ -39,4 +39,13 @@ class Gelombang extends Model
     {
         return $query->where('aktif', true);
     }
+
+    // Method untuk cek apakah ada gelombang aktif
+    public static function isActive()
+    {
+        return self::where('aktif', true)
+                   ->where('tgl_mulai', '<=', now())
+                   ->where('tgl_selesai', '>=', now())
+                   ->exists();
+    }
 }

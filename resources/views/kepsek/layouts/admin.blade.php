@@ -8,7 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>PPDB - Dashboard Kepala Sekolah</title>
+    <title>SPMB - Dashboard Kepala Sekolah</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}" />
 
     <!-- Custom fonts for this template-->
     <link href="{{ asset('sb-admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
@@ -16,6 +17,9 @@
 
     <!-- Custom styles for this template-->
     <link href="{{ asset('sb-admin/css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <link href="{{asset('css/pagination.css')}}" rel="stylesheet">
+
+    @yield('styles')
 
     <!-- Chart.js -->
     <script src="{{ asset('sb-admin/vendor/chart.js/Chart.min.js') }}"></script>

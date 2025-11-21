@@ -12,18 +12,23 @@ use App\Models\PendaftarBerkas;
 use App\Models\Jurusan;
 use App\Models\Gelombang;
 use App\Models\Wilayah;
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PendaftaranController extends Controller
 {
     public function showForm()
     {
         try {
+            // Cek status gelombang aktif
+            $gelombangAktif = Gelombang::isActive();
+            
             // Ambil data jurusan yang aktif
             $jurusan = Jurusan::where('aktif', true)->get();
 
@@ -77,6 +82,7 @@ class PendaftaranController extends Controller
 
             // AMBIL DATA WILAYAH
             $wilayah = Wilayah::all();
+            $provinsiList = Wilayah::getProvinsi();
             
             // Jika tidak ada wilayah, buat data dummy
             if ($wilayah->isEmpty()) {
@@ -91,6 +97,7 @@ class PendaftaranController extends Controller
                         'kodepos' => '40135'
                     ]
                 ]);
+                $provinsiList = collect(['Jawa Barat']);
             }
 
             // Inisialisasi variabel $pendaftar untuk menghindari error
@@ -104,7 +111,7 @@ class PendaftaranController extends Controller
 
             Log::info('ShowForm - Jurusan: ' . $jurusan->count() . ', Gelombang: ' . $gelombang->count() . ', Wilayah: ' . $wilayah->count());
 
-            return view('depan.pages.pendaftaran', compact('jurusan', 'gelombang', 'pendaftar', 'wilayah'));
+            return view('depan.pages.pendaftaran', compact('jurusan', 'gelombang', 'pendaftar', 'wilayah', 'provinsiList', 'gelombangAktif'));
         } catch (\Exception $e) {
             Log::error('Error in showForm: ' . $e->getMessage());
 
@@ -114,7 +121,8 @@ class PendaftaranController extends Controller
             $wilayah = collect([(object) ['id' => 1, 'provinsi' => 'Jawa Barat', 'kabupaten' => 'Bandung', 'kecamatan' => 'Coblong', 'kelurahan' => 'Dago', 'kodepos' => '40135']]);
             $pendaftar = null;
 
-            return view('depan.pages.pendaftaran', compact('jurusan', 'gelombang', 'pendaftar', 'wilayah'))
+            $gelombangAktif = false;
+            return view('depan.pages.pendaftaran', compact('jurusan', 'gelombang', 'pendaftar', 'wilayah', 'provinsiList', 'gelombangAktif'))
                 ->with('warning', 'Data sedang dalam proses penyiapan. Silakan lanjutkan pendaftaran.');
         }
     }
@@ -213,6 +221,7 @@ class PendaftaranController extends Controller
 
     public function submitComplete(Request $request)
     {
+        ob_clean();
         Log::info('=== COMPLETE REGISTRATION SUBMISSION ===');
         Log::info('Request Data:', $request->except(['password', 'password_confirmation']));
 
@@ -237,6 +246,9 @@ class PendaftaranController extends Controller
                 'birthDate' => 'required|date',
                 'address' => 'required',
                 'phone' => 'required|max:20',
+                'provinsi' => 'required|string|max:100',
+                'kabupaten' => 'required|string|max:100', 
+                'kecamatan' => 'required|string|max:100',
                 'wilayah_id' => 'required|exists:wilayah,id',
 
                 // Sekolah Asal
@@ -272,12 +284,30 @@ class PendaftaranController extends Controller
             // Generate registration number
             $noPendaftaran = 'BN666' . date('Y') . str_pad($userId, 6, '0', STR_PAD_LEFT);
 
+            // Cek apakah NIK atau NISN sudah pernah digunakan
+            $existingByNik = PendaftarDataSiswa::where('nik', $request->nik)->first();
+            $existingByNisn = PendaftarDataSiswa::where('nisn', $request->nisn)->first();
+            
+            if ($existingByNik) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'NIK sudah pernah digunakan untuk pendaftaran.'
+                ], 422);
+            }
+            
+            if ($existingByNisn) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'NISN sudah pernah digunakan untuk pendaftaran.'
+                ], 422);
+            }
+            
             // Cek apakah user sudah pernah mendaftar
             $existingPendaftar = Pendaftar::where('user_id', $userId)->first();
             if ($existingPendaftar) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anda sudah melakukan pendaftaran sebelumnya.'
+                    'message' => 'Akun ini sudah melakukan pendaftaran sebelumnya.'
                 ], 422);
             }
 
@@ -293,8 +323,8 @@ class PendaftaranController extends Controller
 
             // Update user name and phone
             $user->update([
-                'name' => $request->fullName,
-                'phone' => $request->phone,
+                'nama' => $request->fullName,
+                'hp' => $request->phone,
             ]);
 
             // Create data siswa
@@ -349,6 +379,16 @@ class PendaftaranController extends Controller
 
             DB::commit();
 
+            // Log aktivitas - Pendaftaran Selesai
+            LogAktivitas::create([
+                'user_id' => $userId,
+                'aksi' => 'CREATE',
+                'objek' => 'Pendaftar: ' . $request->studentName,
+                'objek_data' => ['no_pendaftaran' => $noPendaftaran, 'jurusan_id' => $request->major],
+                'waktu' => now(),
+                'ip' => $request->ip()
+            ]);
+
             Log::info('=== COMPLETE REGISTRATION SUCCESS ===');
             Log::info('Pendaftar created with user_id: ' . $userId . ' for user: ' . $user->email);
 
@@ -378,7 +418,7 @@ class PendaftaranController extends Controller
             'kksFile' => 'KKS',
             'raporFile' => 'RAPOR',
             'photoFile' => 'LAINNYA',
-            'certificateFile' => 'SERTIFIKAT'
+            'certificateFile' => 'LAINNYA'
         ];
 
         foreach ($fileTypes as $field => $jenis) {
@@ -400,6 +440,13 @@ class PendaftaranController extends Controller
 
                 $filename = time() . '_' . $field . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('berkas/' . $pendaftarId, $filename, 'public');
+
+                // Pastikan jenis sesuai enum di database. Jika tidak, gunakan 'LAINNYA' sebagai fallback.
+                $allowedJenis = ['IJAZAH','RAPOR','KIP','KKS','AKTA','KK','BUKTI_BAYAR','LAINNYA'];
+                if (!in_array($jenis, $allowedJenis)) {
+                    Log::warning("Unknown berkas jenis '{$jenis}' provided. Falling back to 'LAINNYA'.");
+                    $jenis = 'LAINNYA';
+                }
 
                 PendaftarBerkas::create([
                     'pendaftar_id' => $pendaftarId,
@@ -423,5 +470,101 @@ class PendaftaranController extends Controller
     {
         $exists = PendaftarDataSiswa::where('nisn', $nisn)->exists();
         return response()->json(['exists' => $exists]);
+    }
+
+    // API Methods untuk Dropdown Wilayah
+    public function getProvinsi()
+    {
+        $provinsi = Wilayah::getProvinsi()->toArray();
+        return response()->json($provinsi, 200, [], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getKabupaten($provinsi)
+    {
+        ob_clean();
+        $kabupaten = Wilayah::getKabupaten($provinsi)->toArray();
+        return response()->json($kabupaten);
+    }
+
+    public function getKecamatan($provinsi, $kabupaten)
+    {
+        ob_clean();
+        $kecamatan = Wilayah::getKecamatan($provinsi, $kabupaten)->toArray();
+        return response()->json($kecamatan);
+    }
+
+    public function getKelurahan($provinsi, $kabupaten, $kecamatan)
+    {
+        ob_clean();
+        $kelurahan = Wilayah::getKelurahan($provinsi, $kabupaten, $kecamatan)->toArray();
+        return response()->json($kelurahan);
+    }
+
+    /**
+     * Return coordinates based on kecamatan.
+     * Fallback order:
+     * 1) wilayah record with lat/lng for the exact provinsi/kabupaten/kecamatan
+     * 2) any wilayah record that matches kecamatan with lat/lng
+     * 3) default coordinates based on kabupaten (fallback to Jawa Barat default)
+     */
+    public function getKoordinatKecamatan($provinsi, $kabupaten, $kecamatan)
+    {
+        ob_clean();
+
+        // Try exact match for wilayah
+        $wilayah = Wilayah::where('provinsi', $provinsi)
+            ->where('kabupaten', $kabupaten)
+            ->where('kecamatan', $kecamatan)
+            ->first();
+
+        if ($wilayah && isset($wilayah->lat) && isset($wilayah->lng) && $wilayah->lat && $wilayah->lng) {
+            return response()->json(['lat' => (float)$wilayah->lat, 'lng' => (float)$wilayah->lng]);
+        }
+
+        // Try any wilayah with same kecamatan that has coordinates
+        $wilayahAny = Wilayah::where('kecamatan', $kecamatan)
+            ->whereNotNull('lat')
+            ->whereNotNull('lng')
+            ->first();
+
+        if ($wilayahAny) {
+            return response()->json(['lat' => (float)$wilayahAny->lat, 'lng' => (float)$wilayahAny->lng]);
+        }
+
+        // Fallback to default coordinates based on kabupaten (reuse mapping similar to PetaController)
+        $kabupatenCoordinates = [
+            'Kota Bandung' => ['lat' => -6.9175, 'lng' => 107.6191],
+            'Kota Cirebon' => ['lat' => -6.7320, 'lng' => 108.5523],
+            'Kota Bekasi' => ['lat' => -6.2383, 'lng' => 106.9756],
+            'Kota Depok' => ['lat' => -6.4025, 'lng' => 106.7942],
+            'Kota Bogor' => ['lat' => -6.5971, 'lng' => 106.8060],
+            'Kota Tasikmalaya' => ['lat' => -7.3257, 'lng' => 108.2148],
+            'Kabupaten Bandung' => ['lat' => -7.1950, 'lng' => 107.5450],
+            'Kabupaten Bandung Barat' => ['lat' => -6.8652, 'lng' => 107.4912],
+            'Kabupaten Sumedang' => ['lat' => -6.8500, 'lng' => 107.9167],
+            'Kabupaten Garut' => ['lat' => -7.2279, 'lng' => 107.9087],
+            'Kabupaten Tasikmalaya' => ['lat' => -7.3274, 'lng' => 108.2207],
+            'Kabupaten Ciamis' => ['lat' => -7.3331, 'lng' => 108.3493],
+            'Kabupaten Kuningan' => ['lat' => -6.9828, 'lng' => 108.4832],
+            'Kabupaten Cirebon' => ['lat' => -6.7710, 'lng' => 108.4821],
+            'Kabupaten Majalengka' => ['lat' => -6.8364, 'lng' => 108.2279],
+            'Kabupaten Indramayu' => ['lat' => -6.3373, 'lng' => 108.3258],
+            'Kabupaten Subang' => ['lat' => -6.5700, 'lng' => 107.7630],
+            'Kabupaten Purwakarta' => ['lat' => -6.5560, 'lng' => 107.4430],
+            'Kabupaten Karawang' => ['lat' => -6.3227, 'lng' => 107.3376],
+            'Kabupaten Bekasi' => ['lat' => -6.2474, 'lng' => 107.1485],
+            'Kabupaten Bogor' => ['lat' => -6.5518, 'lng' => 106.6291],
+            'Kabupaten Sukabumi' => ['lat' => -7.0598, 'lng' => 106.6899],
+            'Kabupaten Cianjur' => ['lat' => -6.8170, 'lng' => 107.1390],
+            'default' => ['lat' => -6.9175, 'lng' => 107.6191]
+        ];
+
+        foreach ($kabupatenCoordinates as $key => $coords) {
+            if (stripos($kabupaten, $key) !== false) {
+                return response()->json($coords);
+            }
+        }
+
+        return response()->json($kabupatenCoordinates['default']);
     }
 }

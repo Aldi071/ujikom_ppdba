@@ -80,7 +80,6 @@
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Jenis Laporan:</h6>
                 <a class="collapse-item {{ request()->routeIs('admin.laporan.pendaftar') ? 'active' : '' }}" href="{{ route('admin.laporan.pendaftar') }}">Laporan Pendaftar</a>
-                <a class="collapse-item {{ request()->routeIs('admin.laporan.keuangan') ? 'active' : '' }}" href="{{ route('admin.laporan.keuangan') }}">Laporan Keuangan</a>
             </div>
         </div>
     </li>

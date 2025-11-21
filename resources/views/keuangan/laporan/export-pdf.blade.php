@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Keuangan PPDB</title>
+    <title>Laporan Keuangan SPMB</title>
     <style>
         /* Reset dan base styles */
         * { 
@@ -131,7 +131,7 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <h1>LAPORAN KEUANGAN PPDB</h1>
+        <h1>LAPORAN KEUANGAN SPMB</h1>
         <div class="subtitle">Sistem Penerimaan Peserta Didik Baru</div>
         <div class="subtitle">
             Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
@@ -146,7 +146,7 @@
                 <div class="info-label">TOTAL PENDAPATAN</div>
             </div>
             <div class="info-item">
-                <div class="info-number">{{ $data->where('status', 'PAID')->count() }}</div>
+                <div class="info-number">{{ $totalPembayaranValid }}</div>
                 <div class="info-label">PEMBAYARAN VALID</div>
             </div>
             <div class="info-item">
@@ -213,7 +213,7 @@
 
     <!-- Footer -->
     <div class="footer">
-        <div>Dokumen ini dicetak otomatis dari Sistem PPDB</div>
+        <div>Dokumen ini dicetak otomatis dari Sistem SPMB</div>
         <div>Halaman 1/1</div>
     </div>
 </body>

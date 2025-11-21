@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Keuangan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pendaftar;
+use App\Services\WhatsAppService;
 
 class ValidasiController extends Controller
 {
@@ -106,6 +108,39 @@ class ValidasiController extends Controller
             ];
 
             DB::table('pendaftar')->where('id', $id)->update($updateData);
+
+            // Kirim WhatsApp ke pendaftar
+            $pendaftar = DB::table('pendaftar as p')
+                ->join('pendaftar_data_siswa as pds', 'p.id', '=', 'pds.pendaftar_id')
+                ->join('pengguna as pg', 'p.user_id', '=', 'pg.id')
+                ->where('p.id', $id)
+                ->select('p.no_pendaftaran', 'pds.nama', 'pg.hp')
+                ->first();
+                
+            if ($pendaftar && $pendaftar->hp) {
+                if ($request->status === 'PAID') {
+                    $message = "Halo {$pendaftar->nama},\n\n";
+                    $message .= "✅ PEMBAYARAN ANDA TELAH DIVERIFIKASI\n\n";
+                    $message .= "No. Pendaftaran: {$pendaftar->no_pendaftaran}\n";
+                    $message .= "Status: PEMBAYARAN DITERIMA\n\n";
+                    $message .= "Selamat! Anda telah menyelesaikan proses pembayaran SPMB.\n\n";
+                    $message .= "Silakan tunggu pengumuman hasil seleksi di website BAKNUS 666.\n\n";
+                    $message .= "Terima kasih.";
+                } else {
+                    $message = "Halo {$pendaftar->nama},\n\n";
+                    $message .= "❌ PEMBAYARAN ANDA DITOLAK\n\n";
+                    $message .= "No. Pendaftaran: {$pendaftar->no_pendaftaran}\n";
+                    $message .= "Status: PEMBAYARAN DITOLAK\n\n";
+                    if ($request->catatan) {
+                        $message .= "Alasan: {$request->catatan}\n\n";
+                    }
+                    $message .= "Silakan upload ulang bukti pembayaran yang benar di website SPMB BAKNUS 666.\n\n";
+                    $message .= "Terima kasih.";
+                }
+                
+                $whatsapp = new WhatsAppService();
+                $whatsapp->sendMessage($pendaftar->hp, $message);
+            }
 
             // Jika ditolak, tambahkan catatan ke berkas bukti bayar
             if ($request->status == 'ADM_REJECT' && $request->catatan) {

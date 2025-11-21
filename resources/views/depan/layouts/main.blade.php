@@ -4,8 +4,12 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
   <title>SPMB 2025/2026 - BAKNUS 666</title>
   <meta content="Penerimaan Peserta Didik Baru BAKNUS 666 Tahun Ajaran 2025/2026. Daftar sekarang dan bergabung bersama kami!" name="description" />
+  <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v={{ time() }}" />
+  <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v={{ time() }}" />
+  <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.12/typed.min.js"></script>
@@ -43,5 +47,6 @@
   @include('depan.partials.footer')
 
   <script src="{{ asset('js/main.js') }}"></script>
+  <script src="{{ asset('js/notifikasi.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
 </body>

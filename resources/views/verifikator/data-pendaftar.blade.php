@@ -1,7 +1,26 @@
 {{-- resources/views/verifikator/data-pendaftar.blade.php --}}
 @extends('verifikator.layouts.admin')
 
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+</style>
+@endsection
+
 @section('content')
+@php
+use Illuminate\Support\Facades\DB;
+@endphp
 <div class="container-fluid">
 
     <!-- Page Heading -->
@@ -96,9 +115,20 @@
                     </thead>
                     <tbody>
                         @forelse($pendaftars as $pendaftar)
-                        <tr>
+                        @php
+                            // Cek apakah ada reupload pada berkas (REUPLOAD marker)
+                            $hasReupload = DB::table('pendaftar_berkas')
+                                ->where('pendaftar_id', $pendaftar->id)
+                                ->where('catatan', 'like', '%REUPLOAD%')
+                                ->exists();
+                        @endphp
+                        <tr {{ $hasReupload ? 'style="background-color: #fffbeb;"' : '' }}>
                             <td>{{ $pendaftar->no_pendaftaran }}</td>
-                            <td>{{ $pendaftar->nama }}</td>
+                            <td>{{ $pendaftar->nama }}
+                                @if($hasReupload)
+                                    <small class="ml-2 text-warning"><i class="fas fa-redo"></i> Reupload</small>
+                                @endif
+                            </td>
                             <td>{{ $pendaftar->jk == 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
                             <td>{{ $pendaftar->jurusan }}</td>
                             <td>{{ $pendaftar->gelombang }}</td>
@@ -121,25 +151,63 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{{ route('verifikator.detail-pendaftar', $pendaftar->id) }}" 
-                                   class="btn btn-sm btn-primary" title="Detail">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                @if($pendaftar->status == 'SUBMIT')
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-success" 
-                                            onclick="updateStatus({{ $pendaftar->id }}, 'ADM_PASS')"
-                                            title="Terima">
-                                        <i class="fas fa-check"></i>
+                                <div class="dropdown">
+                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                            data-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cog"></i> Aksi
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-danger"
-                                            onclick="updateStatus({{ $pendaftar->id }}, 'ADM_REJECT')"
-                                            title="Tolak">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="{{ route('verifikator.detail-pendaftar', $pendaftar->id) }}">
+                                            <i class="fas fa-eye text-info"></i> Lihat Detail
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <button type="button" class="dropdown-item" 
+                                                data-toggle="modal" data-target="#statusModal{{ $pendaftar->id }}">
+                                            <i class="fas fa-edit text-warning"></i> Edit Status
+                                        </button>
+                                    </div>
                                 </div>
-                                @endif
                             </td>
+                        </tr>
+
+                        <!-- Status Modal -->
+                        <div class="modal fade" id="statusModal{{ $pendaftar->id }}" tabindex="-1" role="dialog">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <form action="{{ route('verifikator.update-status', $pendaftar->id) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Status - {{ $pendaftar->no_pendaftaran }}</h5>
+                                            <button type="button" class="close" data-dismiss="modal">
+                                                <span>&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label for="status">Status Baru</label>
+                                                <select class="form-control" name="status" required>
+                                                    @foreach($statusList as $key => $value)
+                                                        <option value="{{ $key }}" {{ $pendaftar->status == $key ? 'selected' : '' }}>
+                                                            {{ $value }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="catatan">Catatan (Opsional)</label>
+                                                <textarea class="form-control" name="catatan" rows="3" 
+                                                          placeholder="Berikan catatan jika diperlukan"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-primary">Simpan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         </tr>
                         @empty
                         <tr>
@@ -152,7 +220,7 @@
             
             <!-- Pagination -->
             <div class="d-flex justify-content-center">
-                {{ $pendaftars->links() }}
+                {{ $pendaftars->links('custom.pagination') }}
             </div>
         </div>
     </div>

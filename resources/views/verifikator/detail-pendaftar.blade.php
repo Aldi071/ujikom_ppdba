@@ -129,16 +129,12 @@
                     <h6>Ayah</h6>
                     <table class="table table-bordered">
                         <tr>
-                            <th width="40%">Nama Ayah</th>
+                            <th width="40%">Nama</th>
                             <td>{{ $pendaftar->nama_ayah ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <th>Pekerjaan Ayah</th>
+                            <th>Pekerjaan</th>
                             <td>{{ $pendaftar->pekerjaan_ayah ?? '-' }}</td>
-                        </tr>
-                        <tr>
-                            <th>HP Ayah</th>
-                            <td>{{ $pendaftar->hp_ayah ?? '-' }}</td>
                         </tr>
                     </table>
                 </div>
@@ -146,20 +142,22 @@
                     <h6>Ibu</h6>
                     <table class="table table-bordered">
                         <tr>
-                            <th width="40%">Nama Ibu</th>
+                            <th width="40%">Nama</th>
                             <td>{{ $pendaftar->nama_ibu ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <th>Pekerjaan Ibu</th>
+                            <th>Pekerjaan</th>
                             <td>{{ $pendaftar->pekerjaan_ibu ?? '-' }}</td>
-                        </tr>
-                        <tr>
-                            <th>HP Ibu</th>
-                            <td>{{ $pendaftar->hp_ibu ?? '-' }}</td>
                         </tr>
                     </table>
                 </div>
             </div>
+                <table class="table table-bordered">
+                <tr>
+                    <th>Nomor Handphone</th>
+                    <td>{{ $pendaftar->hp_ibu ?? '-' }}</td>
+                </tr>
+                </table>
         </div>
     </div>
 
@@ -198,31 +196,47 @@
         <div class="card-body">
             <div class="row">
                 @forelse($berkas as $item)
+                @php
+                    $isReupload = $item->catatan && strpos($item->catatan, 'REUPLOAD') !== false;
+                @endphp
                 <div class="col-md-4 mb-3">
                     <div class="card">
                         <div class="card-body text-center">
                             <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
-                            <h6 class="card-title text-uppercase">{{ $item->jenis }}</h6>
+                            <h6 class="card-title text-uppercase">{{ $item->jenis }}
+                                @if($isReupload)
+                                    <span class="badge badge-warning ml-2" style="font-size: 0.7rem;">REUPLOAD</span>
+                                @endif
+                            </h6>
                             <p class="text-muted small">{{ number_format($item->ukuran_kb) }} KB</p>
                             <a href="{{ asset('storage/' . $item->url) }}" 
                                target="_blank" 
-                               class="btn btn-sm btn-primary">
+                               class="btn btn-sm btn-secondary">
+                                <i class="fas fa-eye"></i> Lihat
+                            </a>
+                            <a href="{{ asset('storage/' . $item->url) }}" 
+                               download class="btn btn-sm btn-success">
                                 <i class="fas fa-download"></i> Download
                             </a>
+                            @if($item->catatan)
+                            <div class="mt-2 text-left">
+                                <small class="text-muted"><strong>Catatan:</strong> {{ $item->catatan }}</small>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
                 @empty
-                <div class="col-12">
-                    <p class="text-center text-muted">Tidak ada berkas yang diupload</p>
-                </div>
+                    <div class="col-12">
+                        <p class="text-center text-muted">Tidak ada berkas yang diupload</p>
+                    </div>
                 @endforelse
             </div>
         </div>
     </div>
 
     <!-- Aksi Verifikasi -->
-    @if($pendaftar->status == 'SUBMIT')
+    @if(in_array($pendaftar->status, ['SUBMIT', 'ADM_PASS', 'ADM_REJECT']))
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Verifikasi Berkas</h6>
@@ -234,11 +248,11 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="status">Status Verifikasi</label>
-                            <select class="form-control @error('status') is-invalid @enderror" id="status" name="status" required>
+                            <label for="status">Status Verifikasi Berkas</label>
+                            <select class="form-control @error('status') is-invalid @enderror" id="status" name="status" required onchange="toggleRejectOptions()">
                                 <option value="">Pilih Status</option>
-                                <option value="ADM_PASS">Berkas Diterima</option>
-                                <option value="ADM_REJECT">Berkas Ditolak</option>
+                                <option value="ADM_PASS">✓ Berkas Diterima</option>
+                                <option value="ADM_REJECT">✗ Berkas Ditolak</option>
                             </select>
                             @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -247,16 +261,58 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="catatan">Catatan (Opsional)</label>
+                            <label for="catatan">Catatan Umum (Opsional)</label>
                             <textarea class="form-control @error('catatan') is-invalid @enderror" 
-                                      id="catatan" name="catatan" rows="1" 
-                                      placeholder="Berikan catatan jika diperlukan">{{ old('catatan') }}</textarea>
+                                      id="catatan" name="catatan" rows="2" 
+                                      placeholder="Berikan catatan umum jika diperlukan">{{ old('catatan') }}</textarea>
                             @error('catatan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
                 </div>
+                
+                <!-- Berkas yang Ditolak -->
+                <div id="rejectOptions" style="display: none;">
+                    <hr>
+                    <h6 class="text-danger">Berkas yang Ditolak</h6>
+                    <p class="text-muted small">Pilih berkas yang ditolak dan berikan catatan untuk masing-masing berkas:</p>
+                    
+                    @if($berkas->count() > 0)
+                        <div class="row">
+                            @foreach($berkas as $item)
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-left-danger">
+                                    <div class="card-body">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" 
+                                                   id="reject_{{ $item->id }}" 
+                                                   name="rejected_berkas[]" 
+                                                   value="{{ $item->id }}"
+                                                   onchange="toggleBerkasNote({{ $item->id }})">
+                                            <label class="custom-control-label font-weight-bold" for="reject_{{ $item->id }}">
+                                                {{ $item->jenis }}
+                                            </label>
+                                        </div>
+                                        <div class="mt-2">
+                                            <textarea class="form-control form-control-sm berkas-note" 
+                                                      id="note_{{ $item->id }}"
+                                                      name="berkas_catatan[{{ $item->id }}]" 
+                                                      rows="2" 
+                                                      placeholder="Catatan untuk berkas {{ $item->jenis }}..." disabled style="display: none;"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Tidak ada berkas yang diupload untuk diverifikasi.
+                        </div>
+                    @endif
+                </div>
+                
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-check"></i> Simpan Verifikasi
                 </button>
@@ -264,6 +320,56 @@
         </div>
     </div>
     @endif
+
+<script>
+function toggleRejectOptions() {
+    const status = document.getElementById('status').value;
+    const rejectOptions = document.getElementById('rejectOptions');
+    
+    if (status === 'ADM_REJECT') {
+        rejectOptions.style.display = 'block';
+        // Ensure note visibility matches checked boxes
+        document.querySelectorAll('input[name="rejected_berkas[]"]').forEach(cb => {
+            const id = cb.value;
+            try { toggleBerkasNote(id); } catch(e) {}
+        });
+    } else {
+        rejectOptions.style.display = 'none';
+        // Uncheck all checkboxes
+        document.querySelectorAll('input[name="rejected_berkas[]"]').forEach(cb => cb.checked = false);
+        // Clear all textareas
+        document.querySelectorAll('textarea[name^="berkas_catatan"]').forEach(ta => { ta.value = ''; ta.disabled = true; ta.style.display = 'none'; });
+    }
+}
+
+function toggleBerkasNote(id) {
+    const cb = document.getElementById('reject_' + id);
+    const ta = document.getElementById('note_' + id);
+    if (!cb || !ta) return;
+
+    if (cb.checked) {
+        ta.style.display = 'block';
+        ta.disabled = false;
+        // focus the note to encourage input (optional)
+        // ta.focus();
+    } else {
+        ta.style.display = 'none';
+        ta.disabled = true;
+        ta.value = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize per-berkas note visibility based on checkbox state
+    document.querySelectorAll('input[name="rejected_berkas[]"]').forEach(cb => {
+        const id = cb.value;
+        // Attach change handler in case blade rendering didn't add onchange attributes
+        cb.addEventListener('change', function() { toggleBerkasNote(id); });
+        // Set initial visibility
+        try { toggleBerkasNote(id); } catch(e) {}
+    });
+});
+</script>
 
 </div>
 @endsection

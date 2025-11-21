@@ -1,6 +1,22 @@
 {{-- resources/views/keuangan/keuangan.blade.php --}}
 @extends('keuangan.layouts.admin')
 
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container-fluid">
 
@@ -134,8 +150,17 @@
                                                 <span class="badge badge-warning">Pending</span>
                                             </td>
                                             <td>
-                                                <a href="{{ route('keuangan.validasi.detail', $bayar->id) }}" 
-                                                   class="btn btn-sm btn-primary">Cek Bukti</a>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                                            data-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-cog"></i> Aksi
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{{ route('keuangan.validasi.detail', $bayar->id) }}">
+                                                            <i class="fas fa-check-circle text-success"></i> Cek Bukti Bayar
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @empty

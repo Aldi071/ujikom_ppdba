@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hasil Seleksi PPDB</title>
+    <title>Hasil Seleksi SPMB</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 14px; }
         .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -25,7 +25,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>HASIL SELEKSI PPDB</h1>
+        <h1>HASIL SELEKSI SPMB</h1>
         <p>SMK Example School</p>
         <p>Tahun Ajaran {{ date('Y') }}/{{ date('Y') + 1 }}</p>
         <p>Tanggal Cetak: {{ date('d/m/Y H:i') }}</p>
@@ -76,7 +76,7 @@
 
     <div class="footer">
         <p>Total Data: {{ $hasilSeleksi->count() }} siswa</p>
-        <p>&copy; {{ date('Y') }} SMK Example School - Sistem PPDB</p>
+        <p>&copy; {{ date('Y') }} SMK Bakti Nusantara 666 - Sistem SPMB</p>
     </div>
 
     <script>

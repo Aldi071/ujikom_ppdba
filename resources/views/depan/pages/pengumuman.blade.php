@@ -57,7 +57,6 @@
             <div class="card fade-in">
                 <div style="margin-bottom: 30px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                        <h3 style="color: var(--primary-blue);">Siswa Diterima Jalur Zonasi</h3>
                         <div style="display: flex; gap: 10px;">
                             <select id="filterJurusan" style="padding: 8px 15px; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px;">
                                 <option value="">Semua Jurusan</option>
@@ -123,25 +122,6 @@
         <div class="container">
             <h2 class="section-title fade-in">Jadwal Daftar Ulang</h2>
             <div class="card-grid">
-                <div class="card fade-in" style="text-align: center;">
-                    <i class="fas fa-calendar-check" style="font-size: 3rem; color: var(--primary-blue); margin-bottom: 20px;"></i>
-                    <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Gelombang 1</h3>
-                    <div style="background: var(--light-blue); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--dark-blue); margin-bottom: 5px;">3 - 5 Agustus 2025</div>
-                        <small style="color: var(--text-light);">Untuk siswa diterima jalur zonasi</small>
-                    </div>
-                    <div style="color: var(--text-light); font-size: 0.9rem;">
-                        <p><strong>Lokasi:</strong> Ruang SPMB BAKNUS 666</p>
-                        <p><strong>Waktu:</strong> 08.00 - 15.00 WIB</p>
-                    </div>
-                </div>
-
-                <div class="card fade-in" style="text-align: center;">
-                                        <!-- Debug block removed for production -->
-                        <p><strong>Waktu:</strong> 08.00 - 15.00 WIB</p>
-                    </div>
-                </div>
-
                 <div class="card fade-in" style="text-align: center;">
                     <i class="fas fa-calendar-check" style="font-size: 3rem; color: #059669; margin-bottom: 20px;"></i>
                     <h3 style="color: #059669; margin-bottom: 15px;">Gelombang 3</h3>
@@ -237,6 +217,16 @@
     document.addEventListener('DOMContentLoaded', function() {
         initializeScrollEffects();
         loadSiswaDiterima();
+        
+        // Auto-check status jika ada parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoCheck = urlParams.get('auto_check');
+        if (autoCheck) {
+            document.getElementById('registrationNumber').value = autoCheck;
+            checkStatus();
+            // Hapus parameter dari URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         
         // Setup event listeners
         document.getElementById('checkStatusForm').addEventListener('submit', checkStatus);
@@ -352,7 +342,7 @@
                             <span style="font-size: 1.1rem; text-transform: capitalize;">${student.jalur}</span>
                         </div>
                         <div>
-                            <strong style="color: var(--primary-blue);">Nilai Akhir</strong><br>
+                            <strong style="color: var(--primary-blue);">Nilai Rata-Rata</strong><br>
                             <span style="font-size: 1.1rem; font-weight: bold; color: var(--primary-blue);">${student.nilai}</span>
                         </div>
                         <div>
@@ -369,6 +359,9 @@
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                         <button onclick="printRegistrationProof('${student.registrationNumber}')" class="btn btn-primary">
                             <i class="fas fa-print"></i> Cetak Bukti
+                        </button>
+                        <button onclick="exportKartuPDF('${student.registrationNumber}')" class="btn btn-success">
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </button>
                         <button onclick="shareResult('${student.registrationNumber}', '${student.name}')" class="btn btn-secondary">
                             <i class="fas fa-share"></i> Bagikan
@@ -416,6 +409,12 @@
                         </div>
                     </div>
                     
+                    ${student.gelombang_biaya ? `
+                        <div style="margin-top:12px;">
+                            <strong style="color: var(--primary-blue);">Biaya Pendaftaran</strong><br>
+                            <span style="font-size:1.1rem; font-weight:bold; color: #0f766e;">${Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(student.gelombang_biaya)}</span>
+                        </div>
+                    ` : ''}
                     <!-- Debug info removed for production -->
                 </div>
                 
@@ -494,19 +493,90 @@
                 `}
                 
                 <div style="text-align: center; margin-top: 20px;">
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+                        <button onclick="exportKartuPDF('${student.registrationNumber}')" class="btn btn-success">
+                            <i class="fas fa-file-pdf"></i> Export Kartu PDF
+                        </button>
+                    </div>
                     <p style="color: var(--text-light); font-size: 0.9rem;">
                         <i class="fas fa-info-circle"></i> Setelah upload, bukti pembayaran akan diverifikasi oleh admin.
                     </p>
                 </div>
             `;
-        } else if (student.status === 'TIDAK DITERIMA') {
+        } else if (student.status === 'TIDAK DITERIMA' || student.status_db === 'ADM_REJECT') {
+            // Tampilkan berkas yang ditolak jika ada
+            let rejectedBerkasHtml = '';
+            if (student.rejected_berkas && student.rejected_berkas.length > 0) {
+                rejectedBerkasHtml = `
+                    <div style="background: #fef2f2; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ef4444;">
+                        <h5 style="color: #dc2626; margin-bottom: 15px;">
+                            <i class="fas fa-exclamation-triangle"></i> Berkas yang Ditolak
+                        </h5>
+                        <div style="display: grid; gap: 15px;">
+                            ${student.rejected_berkas.map(berkas => `
+                                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 3px solid #ef4444;">
+                                    <div style="font-weight: bold; color: #dc2626; margin-bottom: 5px;">
+                                        ${berkas.jenis}
+                                    </div>
+                                    <div style="color: #7f1d1d; font-size: 0.9rem; margin-bottom: 10px;">
+                                        ${berkas.catatan || 'Tidak ada catatan khusus'}
+                                    </div>
+
+                                    ${student.is_owner && student.is_logged_in ? `
+                                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #fee2e2;">
+                                            <div class="form-group" style="margin-bottom: 10px;">
+                                                <label style="font-size: 0.9rem; color: var(--text-dark); font-weight: 500; display: block; margin-bottom: 8px;">
+                                                    Pilih File untuk ${berkas.jenis}
+                                                </label>
+                                                <div style="display: flex; gap: 10px; align-items: flex-end;">
+                                                    <input type="file" 
+                                                           id="reupload_${berkas.id}" 
+                                                           name="berkas_file_${berkas.id}"
+                                                           accept=".jpg,.jpeg,.png,.pdf" 
+                                                           style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem;">
+                                                </div>
+                                                <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                                                    Format: JPG, PNG, PDF (Maksimal 5MB)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${student.is_owner && student.is_logged_in ? `
+                            <!-- Single button to upload all selected files -->
+                            <div style="margin-top: 15px; padding: 15px; border-radius: 8px; background: #fff7ed; border: 1px solid #fde3bf;">
+                                <h6 style="margin:0 0 8px 0; color:#92400e;">Upload Semua Berkas yang Ditolak</h6>
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                    <button type="button" id="btnUploadAll_${student.registrationNumber.replace(/[^a-zA-Z0-9_-]/g,'')}" onclick="reUploadAll('${student.registrationNumber}')" style="padding:8px 12px; background:#10b981; color:white; border:none; border-radius:6px;">
+                                        <i class="fas fa-upload"></i> Upload Semua Berkas
+                                    </button>
+                                </div>
+                                <small style="display:block; margin-top:6px; color:#7c2d12;">Pilih file untuk setiap berkas yang ditolak menggunakan tombol di setiap kartu, lalu klik "Upload Semua Berkas". Maks 5MB per file.</small>
+                            </div>
+                        ` : ''}
+                        ${student.catatan_verifikasi && student.status_db === 'ADM_REJECT' ? `
+                            <div style="margin-top: 15px; padding: 10px; background: #fee2e2; border-radius: 6px;">
+                                <strong style="color: #dc2626;">Catatan Verifikator:</strong><br>
+                                <span style="color: #7f1d1d;">${student.catatan_verifikasi}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            
+            const statusTitle = student.status_db === 'ADM_REJECT' ? 'BERKAS DITOLAK' : 'TIDAK DITERIMA';
+            const statusMessage = student.status_db === 'ADM_REJECT' ? 
+                'Berkas Anda tidak memenuhi persyaratan' : 
+                'Anda belum diterima';
             statusContent.innerHTML = `
                 <div style="text-align: center; margin-bottom: 30px;">
                     <div style="font-size: 4rem; color: #ef4444; margin-bottom: 20px;">
                         <i class="fas fa-times-circle"></i>
                     </div>
-                    <h3 style="color: #ef4444; margin-bottom: 10px;">MOHON MAAF</h3>
-                    <h4 style="color: var(--primary-blue);">Anda belum diterima</h4>
+                    <h3 style="color: #ef4444; margin-bottom: 10px;">${statusTitle}</h3>
+                    <h4 style="color: var(--primary-blue);">${statusMessage}</h4>
                 </div>
                 
                 <div style="background: var(--light-blue); padding: 25px; border-radius: 15px; margin-bottom: 25px;">
@@ -518,10 +588,14 @@
                     </div>
                 </div>
                 
+                ${rejectedBerkasHtml}
+                
                 <div style="text-align: center;">
                     <p style="color: var(--text-light); margin-bottom: 20px;">
-                        Terima kasih telah berpartisipasi dalam proses seleksi SPMB BAKNUS 666.
-                        Jangan putus asa dan tetap semangat!
+                        ${student.status_db === 'ADM_REJECT' ? 
+                            'Silakan perbaiki berkas yang ditolak dan daftar kembali di gelombang berikutnya.' :
+                            'Terima kasih telah berpartisipasi dalam proses seleksi SPMB BAKNUS 666. Jangan putus asa dan tetap semangat!'
+                        }
                     </p>
                     <button onclick="window.location.href='/'" class="btn btn-primary">
                         <i class="fas fa-home"></i> Kembali ke Beranda
@@ -554,9 +628,14 @@
                         Hasil seleksi akan diumumkan sesuai jadwal. 
                         Pantau terus website kami untuk informasi lebih lanjut.
                     </p>
-                    <button onclick="window.location.href='/'" class="btn btn-primary">
-                        <i class="fas fa-home"></i> Kembali ke Beranda
-                    </button>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="exportKartuPDF('${student.registrationNumber}')" class="btn btn-success">
+                            <i class="fas fa-file-pdf"></i> Export Kartu PDF
+                        </button>
+                        <button onclick="window.location.href='/'" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Kembali ke Beranda
+                        </button>
+                    </div>
                 </div>
             `;
         }
@@ -626,13 +705,13 @@
             if (data.success) {
                 showNotification('Bukti pembayaran berhasil diupload dan menunggu verifikasi', 'success');
                 
-                // Refresh data status setelah 2 detik
-                setTimeout(() => {
-                    const regNumber = document.getElementById('registrationNumber').value.trim();
-                    if (regNumber) {
+                // Langsung refresh status
+                const regNumber = document.getElementById('registrationNumber').value.trim();
+                if (regNumber) {
+                    setTimeout(() => {
                         checkStatus();
-                    }
-                }, 2000);
+                    }, 1000);
+                }
             } else {
                 showNotification(data.message || 'Gagal mengupload bukti pembayaran', 'error');
             }
@@ -642,6 +721,146 @@
         } finally {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+        }
+    }
+    
+    // Re-upload berkas yang ditolak
+    async function reUploadBerkas(registrationNumber, berkasId, btn = null) {
+        // Determine file input: either individual input or combined input
+        let fileInput = document.getElementById(`reupload_${berkasId}`);
+        if (!fileInput) {
+            // try combined input with dynamic id (constructed using registrationNumber)
+            fileInput = document.querySelector(`#reupload_combined_file_${registrationNumber}`) || document.querySelector(`#reupload_combined_file_${registrationNumber.replace(/[^a-zA-Z0-9_-]/g,'')}`);
+        }
+        const file = fileInput ? fileInput.files[0] : null;
+        
+        if (!file) {
+            showNotification('Pilih file berkas terlebih dahulu', 'error');
+            return;
+        }
+        
+        // Validasi ukuran file
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('Ukuran file maksimal 5MB', 'error');
+            return;
+        }
+        
+        // Validasi tipe file
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Format file harus JPG, PNG, atau PDF', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('berkas_file', file);
+        formData.append('registrationNumber', registrationNumber);
+        formData.append('berkas_id', berkasId);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        // (Optional) disable button to prevent double clicks
+        let originalText = null;
+        if (btn) {
+            try { btn.disabled = true; originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...'; } catch(e) {}
+        }
+        
+        try {
+            const response = await fetch('{{ route("pengumuman.reupload-berkas") }}', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Tampilkan notifikasi yang berbeda untuk BUKTI_BAYAR
+                if (data.is_bukti_bayar) {
+                    showNotification('✅ Bukti pembayaran berhasil di-reupload. Data Anda akan diproses kembali oleh tim keuangan.', 'success');
+                } else {
+                    showNotification('✅ Berkas berhasil di-reupload dan menunggu verifikasi ulang oleh verifikator', 'success');
+                }
+                
+                // Refresh status setelah 1.5 detik
+                setTimeout(() => {
+                    checkStatus();
+                }, 1500);
+            } else {
+                showNotification(data.message || 'Gagal mengupload berkas', 'error');
+            }
+        } catch (error) {
+            console.error('Error saat upload:', error);
+            showNotification('Terjadi kesalahan jaringan: ' + error.message, 'error');
+        } finally {
+            if (btn && originalText !== null) { try { btn.innerHTML = originalText; btn.disabled = false; } catch(e) {} }
+        }
+    }
+
+    // Re-upload all selected rejected berkas in one request
+    async function reUploadAll(registrationNumber) {
+        const safeId = registrationNumber.replace(/[^a-zA-Z0-9_-]/g,'');
+        const btn = document.getElementById(`btnUploadAll_${safeId}`);
+
+        // Gather all file inputs for rejected berkas
+        const inputs = document.querySelectorAll('[id^="reupload_"]');
+        const formData = new FormData();
+        formData.append('registrationNumber', registrationNumber);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        let found = 0;
+
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i];
+            // id format: reupload_<berkasId>
+            const m = input.id.match(/^reupload_(\d+)$/);
+            if (!m) continue;
+            const berkasId = m[1];
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+
+                // Validate size (<=5MB) and type
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification(`Ukuran file untuk berkas ${berkasId} maksimal 5MB`, 'error');
+                    return;
+                }
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification(`Format file untuk berkas ${berkasId} harus JPG, PNG, atau PDF`, 'error');
+                    return;
+                }
+
+                formData.append(`berkas_files[${berkasId}]`, file);
+                found++;
+            }
+        }
+
+        if (found === 0) {
+            showNotification('Pilih minimal satu file untuk diupload', 'error');
+            return;
+        }
+
+        // Disable button
+        let originalText = null;
+        if (btn) { originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengupload...'; }
+
+        try {
+            const response = await fetch('{{ route("pengumuman.reupload-multiple") }}', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification(data.message || 'Upload berhasil', 'success');
+                setTimeout(() => checkStatus(), 1500);
+            } else {
+                showNotification(data.message || 'Gagal mengupload berkas', 'error');
+            }
+        } catch (error) {
+            console.error('Error saat upload all:', error);
+            showNotification('Terjadi kesalahan jaringan: ' + error.message, 'error');
+        } finally {
+            if (btn && originalText !== null) { btn.innerHTML = originalText; btn.disabled = false; }
         }
     }
     
@@ -844,12 +1063,20 @@
         });
     }
 
+    // Export kartu pendaftaran ke PDF
+    function exportKartuPDF(registrationNumber) {
+        const url = `{{ url('/kartu-pendaftaran') }}/${registrationNumber}`;
+        window.open(url, '_blank');
+    }
+
     // Export functions for global use
     window.checkStatus = checkStatus;
     window.filterStudents = filterStudents;
     window.searchStudents = searchStudents;
     window.shareResult = shareResult;
     window.printRegistrationProof = printRegistrationProof;
+    window.exportKartuPDF = exportKartuPDF;
     window.showNotification = showNotification;
     window.uploadBuktiPembayaran = uploadBuktiPembayaran;
+    window.reUploadBerkas = reUploadBerkas;
 </script>

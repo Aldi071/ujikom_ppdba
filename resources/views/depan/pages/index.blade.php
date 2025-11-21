@@ -1,6 +1,10 @@
 @extends('depan.layouts.main')
 @section('content')
-<section class="hero">
+<section class="hero-with-video">
+    <video class="hero-video" autoplay muted loop playsinline>
+        <source src="{{ asset('video/video.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
     <div class="hero-content">
         <div class="hero-logo">
             <img
@@ -52,22 +56,6 @@
 
                     <form id="registerForm">
                         @csrf
-                        <div class="form-group">
-                            <label for="nisn">NISN</label>
-                            <input
-                                id="nisn"
-                                name="nisn"
-                                placeholder="Masukkan NISN Anda (10 digit)"
-                                required
-                                type="text"
-                                value="{{ old('nisn') }}"
-                                pattern="[0-9]{10}"
-                                title="NISN harus 10 digit angka"
-                                maxlength="10" />
-                            @error('nisn')
-                            <span style="color: #dc2626; font-size: 0.875rem; margin-top: 5px; display: block;">{{ $message }}</span>
-                            @enderror
-                        </div>
                         <div class="form-group">
                             <label for="nama">Nama</label>
                             <input
@@ -185,13 +173,13 @@
             <form action="{{ route('peserta.login') }}" method="POST">
                 @csrf
                 <div class="form-group">
-                    <label for="loginEmail">Email / NISN</label>
+                    <label for="loginEmail">Email</label>
                     <input
                         id="loginEmail"
                         name="email"
-                        placeholder="Masukkan email atau NISN"
+                        placeholder="Masukkan email"
                         required
-                        type="text"
+                        type="email"
                         value="{{ old('email') }}" />
                 </div>
                 <div class="form-group">
@@ -218,171 +206,6 @@
     </div>
 </section>
 @endguest
-
-<section class="section" style="background: var(--light-blue)">
-    <div class="container">
-        <h2 class="section-title fade-in">Pengumuman Terbaru</h2>
-        <p
-            style="
-            text-align: center;
-            color: var(--text-light);
-            max-width: 700px;
-            margin: 0 auto 40px;
-          ">
-            Dapatkan informasi terkini seputar kegiatan, jadwal penting, dan acara
-            menarik di SMK Bakti Nusantara 666. Gunakan tombol panah untuk melihat
-            pengumuman lainnya!
-        </p>
-        <div class="splide" id="announcement-slider">
-            <div class="splide__track">
-                <ul class="splide__list">
-                    <li class="splide__slide">
-                        <div
-                            class="card fade-in"
-                            style="display: flex; align-items: center; gap: 25px">
-                            <div
-                                style="
-                      background: var(--primary-blue);
-                      color: white;
-                      padding: 25px;
-                      border-radius: 15px;
-                      text-align: center;
-                      flex-shrink: 0;
-                      width: 90px;
-                    ">
-                                <div style="font-size: 1.8rem; font-weight: bold">15</div>
-                                <div>Juni</div>
-                            </div>
-                            <div>
-                                <h3 style="color: var(--primary-blue); margin-bottom: 8px">
-                                    Pembukaan SPMB 2025/2026
-                                </h3>
-                                <p style="color: var(--text-light); margin-bottom: 10px">
-                                    Pendaftaran Peserta Didik Baru resmi dibuka! Calon siswa
-                                    dapat melakukan pendaftaran secara online melalui halaman
-                                    <a
-                                        href="/pendaftaran"
-                                        style="color: var(--primary-blue); font-weight: 600">SPMB Online</a>.
-                                </p>
-                                <p
-                                    style="
-                        font-size: 0.9rem;
-                        color: var(--text-light);
-                        margin-bottom: 12px;
-                      ">
-                                    <i class="fas fa-map-marker-alt"></i> Online melalui situs
-                                    resmi sekolah
-                                </p>
-                                <a
-                                    class="btn btn-secondary"
-                                    href="/informasi#jadwal"
-                                    style="padding: 8px 16px; font-size: 0.9rem">
-                                    <i class="fas fa-info-circle"></i> Lihat Detail
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="splide__slide">
-                        <div
-                            class="card fade-in"
-                            style="display: flex; align-items: center; gap: 25px">
-                            <div
-                                style="
-                      background: var(--accent-blue);
-                      color: white;
-                      padding: 25px;
-                      border-radius: 15px;
-                      text-align: center;
-                      flex-shrink: 0;
-                      width: 90px;
-                    ">
-                                <div style="font-size: 1.8rem; font-weight: bold">20</div>
-                                <div>Juni</div>
-                            </div>
-                            <div>
-                                <h3 style="color: var(--primary-blue); margin-bottom: 8px">
-                                    Info Day SMK BAKNUS 666
-                                </h3>
-                                <p style="color: var(--text-light); margin-bottom: 10px">
-                                    Acara pengenalan sekolah, jurusan, dan program unggulan.
-                                    Orang tua dan calon siswa diundang untuk hadir secara
-                                    gratis!
-                                </p>
-                                <p
-                                    style="
-                        font-size: 0.9rem;
-                        color: var(--text-light);
-                        margin-bottom: 12px;
-                      ">
-                                    <i class="fas fa-map-marker-alt"></i> Aula SMK Bakti
-                                    Nusantara 666
-                                </p>
-                                <a
-                                    class="btn btn-secondary"
-                                    href="/informasi#infoday"
-                                    style="padding: 8px 16px; font-size: 0.9rem">
-                                    <i class="fas fa-calendar-check"></i> Lihat Jadwal
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="splide__slide">
-                        <div
-                            class="card fade-in"
-                            style="display: flex; align-items: center; gap: 25px">
-                            <div
-                                style="
-                      background: var(--dark-blue);
-                      color: white;
-                      padding: 25px;
-                      border-radius: 15px;
-                      text-align: center;
-                      flex-shrink: 0;
-                      width: 90px;
-                    ">
-                                <div style="font-size: 1.8rem; font-weight: bold">25</div>
-                                <div>Juni</div>
-                            </div>
-                            <div>
-                                <h3 style="color: var(--primary-blue); margin-bottom: 8px">
-                                    Try Out Online Gratis
-                                </h3>
-                                <p style="color: var(--text-light); margin-bottom: 10px">
-                                    Ikuti try out online untuk mengukur kesiapan menghadapi
-                                    ujian masuk. Peserta terbaik akan mendapatkan sertifikat
-                                    &amp; beasiswa!
-                                </p>
-                                <p
-                                    style="
-                        font-size: 0.9rem;
-                        color: var(--text-light);
-                        margin-bottom: 12px;
-                      ">
-                                    <i class="fas fa-globe"></i> Melalui portal e-learning
-                                    sekolah
-                                </p>
-                                <a
-                                    class="btn btn-secondary"
-                                    href="/pengumuman#tryout"
-                                    style="padding: 8px 16px; font-size: 0.9rem">
-                                    <i class="fas fa-arrow-right"></i> Daftar Sekarang
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            <div class="splide__arrows">
-                <button class="splide__arrow splide__arrow--prev">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="splide__arrow splide__arrow--next">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
 <section class="section">
     <div class="container">
         <h2 class="section-title fade-in">Informasi Cepat SPMB</h2>
@@ -827,54 +650,73 @@
     }
 
     async function handleRegisterSubmit() {
-        // Reset pesan error sebelumnya
-        clearMessages();
+    clearMessages();
 
-        const formData = getFormData();
-        if (!validateFormData(formData)) {
-            return;
-        }
-
-        // Tampilkan loading state
-        const registerBtn = document.getElementById('registerBtn');
-        if (!registerBtn) return;
-
-        const originalText = registerBtn.innerHTML;
-        registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mendaftarkan...';
-        registerBtn.disabled = true;
-
-        try {
-            const response = await fetch("{{ route('peserta.register') }}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-
-            const data = await response.json();
-            // Debug log removed: Register Response
-
-            if (data.status === 'success') {
-                handleRegisterSuccess(data);
-            } else {
-                handleRegisterError(data);
-            }
-        } catch (error) {
-            console.error('Network Error:', error);
-            showMessage('error', 'Terjadi kesalahan jaringan. Silakan coba lagi.');
-        } finally {
-            // Reset loading state
-            registerBtn.innerHTML = originalText;
-            registerBtn.disabled = false;
-        }
+    const formData = getFormData();
+    if (!validateFormData(formData)) {
+        return;
     }
+
+    const registerBtn = document.getElementById('registerBtn');
+    if (!registerBtn) return;
+
+    const originalText = registerBtn.innerHTML;
+    registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mendaftarkan...';
+    registerBtn.disabled = true;
+
+    try {
+        const response = await fetch("{{ route('peserta.register') }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        // AMBIL RESPONSE SEBAGAI TEXT DULU
+        const responseText = await response.text();
+        console.log('Raw Response:', responseText);
+
+        let data;
+        try {
+            // COBA PARSE SEBAGAI JSON
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            
+            // JIKA GAGAL, CARI JSON DI DALAM RESPONSE TEXT
+            const jsonMatch = responseText.match(/\{.*\}/s);
+            if (jsonMatch) {
+                try {
+                    data = JSON.parse(jsonMatch[0]);
+                    console.log('Extracted JSON:', data);
+                } catch (e) {
+                    throw new Error('Response tidak valid: ' + responseText.substring(0, 100));
+                }
+            } else {
+                throw new Error('Response tidak valid: ' + responseText.substring(0, 100));
+            }
+        }
+
+        if (data.status === 'success') {
+            handleRegisterSuccess(data);
+        } else {
+            handleRegisterError(data);
+        }
+    } catch (error) {
+        console.error('Network Error:', error);
+        showMessage('error', 'Terjadi kesalahan: ' + error.message);
+    } finally {
+        registerBtn.innerHTML = originalText;
+        registerBtn.disabled = false;
+    }
+}
 
     function getFormData() {
         return {
-            nisn: document.getElementById('nisn')?.value.trim() || '',
             nama: document.getElementById('nama')?.value.trim() || '',
             email: document.getElementById('email')?.value.trim() || '',
             password: document.getElementById('password')?.value || '',
@@ -883,12 +725,6 @@
     }
 
     function validateFormData(data) {
-        // Validasi NISN
-        if (!/^\d{10}$/.test(data.nisn)) {
-            showMessage('error', 'NISN harus terdiri dari 10 digit angka.');
-            return false;
-        }
-
         // Validasi nama
         if (data.nama.length < 2) {
             showMessage('error', 'Nama harus diisi dengan minimal 2 karakter.');
@@ -968,58 +804,82 @@
     }
 
     async function handleOtpVerification() {
-        const email = document.getElementById('email')?.value;
-        const otp = document.getElementById('otpRegister')?.value;
+    const email = document.getElementById('email')?.value;
+    const otp = document.getElementById('otpRegister')?.value;
 
-        if (!email) {
-            showMessage('error', 'Email tidak ditemukan. Silakan daftar ulang.');
-            return;
-        }
-
-        if (!otp || !/^\d{6}$/.test(otp)) {
-            showMessage('error', 'Masukkan kode OTP 6 digit yang valid.');
-            return;
-        }
-
-        // Tampilkan loading state
-        const verifyBtn = document.getElementById('verifyOtpBtn');
-        if (!verifyBtn) return;
-
-        const originalText = verifyBtn.innerHTML;
-        verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memverifikasi...';
-        verifyBtn.disabled = true;
-
-        try {
-            const response = await fetch("{{ route('peserta.verifyOtp') }}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: email,
-                    otp: otp
-                })
-            });
-
-            const data = await response.json();
-            // Debug log removed: OTP Verification Response
-
-            if (data.status === 'success') {
-                handleOtpSuccess(data);
-            } else {
-                handleOtpError(data);
-            }
-        } catch (error) {
-            console.error('Network Error:', error);
-            showMessage('error', 'Terjadi kesalahan jaringan. Silakan coba lagi.');
-        } finally {
-            // Reset loading state
-            verifyBtn.innerHTML = originalText;
-            verifyBtn.disabled = false;
-        }
+    if (!email) {
+        showMessage('error', 'Email tidak ditemukan. Silakan daftar ulang.');
+        return;
     }
+
+    if (!otp || !/^\d{6}$/.test(otp)) {
+        showMessage('error', 'Masukkan kode OTP 6 digit yang valid.');
+        return;
+    }
+
+    // Tampilkan loading state
+    const verifyBtn = document.getElementById('verifyOtpBtn');
+    if (!verifyBtn) return;
+
+    const originalText = verifyBtn.innerHTML;
+    verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memverifikasi...';
+    verifyBtn.disabled = true;
+
+    try {
+        // GUNAKAN ROUTE NAME YANG BENAR
+        const response = await fetch("{{ route('peserta.verifyOtp') }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                email: email,
+                otp: otp
+            })
+        });
+
+        // AMBIL RESPONSE SEBAGAI TEXT DULU
+        const responseText = await response.text();
+        console.log('Raw OTP Response:', responseText);
+
+        let data;
+        try {
+            // COBA PARSE SEBAGAI JSON
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            
+            // JIKA GAGAL, CARI JSON DI DALAM RESPONSE TEXT
+            const jsonMatch = responseText.match(/\{.*\}/s);
+            if (jsonMatch) {
+                try {
+                    data = JSON.parse(jsonMatch[0]);
+                    console.log('Extracted OTP JSON:', data);
+                } catch (e) {
+                    throw new Error('Response OTP tidak valid: ' + responseText.substring(0, 100));
+                }
+            } else {
+                throw new Error('Response OTP tidak valid: ' + responseText.substring(0, 100));
+            }
+        }
+
+        if (data.status === 'success') {
+            handleOtpSuccess(data);
+        } else {
+            handleOtpError(data);
+        }
+    } catch (error) {
+        console.error('Network Error:', error);
+        showMessage('error', 'Terjadi kesalahan: ' + error.message);
+    } finally {
+        // Reset loading state
+        verifyBtn.innerHTML = originalText;
+        verifyBtn.disabled = false;
+    }
+}
 
     function handleOtpSuccess(data) {
         showMessage('success', data.message);

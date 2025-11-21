@@ -1,15 +1,32 @@
 {{-- resources/views/admin/master/wilayah.blade.php --}}
 @extends('admin.layouts.main')
 
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+    .dropdown-item.text-danger:hover {
+        background-color: #f5c6cb;
+        color: #721c24 !important;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container-fluid">
 
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Master Data Wilayah</h1>
-        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#quickAddModal">
-            <i class="fas fa-plus"></i> Quick Add
-        </button>
     </div>
 
     <!-- Alert Messages -->
@@ -155,21 +172,25 @@
                                             <td>{{ $item->kelurahan }}</td>
                                             <td>{{ $item->kodepos }}</td>
                                             <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="{{ route('admin.master.wilayah.edit', $item->id) }}" 
-                                                       class="btn btn-warning" title="Edit">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <form action="{{ route('admin.master.wilayah.destroy', $item->id) }}" 
-                                                          method="POST" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger" 
-                                                                onclick="return confirm('Apakah Anda yakin ingin menghapus wilayah ini?')"
-                                                                title="Hapus">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                                            data-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-cog"></i> Aksi
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{{ route('admin.master.wilayah.edit', $item->id) }}">
+                                                            <i class="fas fa-edit text-warning"></i> Edit Wilayah
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <form action="{{ route('admin.master.wilayah.destroy', $item->id) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="dropdown-item text-danger" 
+                                                                    onclick="return confirm('Apakah Anda yakin ingin menghapus wilayah ini?')">
+                                                                <i class="fas fa-trash"></i> Hapus Wilayah
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -179,11 +200,8 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="text-muted">
-                                Menampilkan {{ $wilayah->firstItem() }} - {{ $wilayah->lastItem() }} dari {{ $wilayah->total() }} data
-                            </div>
-                            {{ $wilayah->links() }}
+                        <div class="d-flex justify-content-center mt-3">
+                            {{ $wilayah->links('custom.pagination') }}
                         </div>
                     @endif
                 </div>

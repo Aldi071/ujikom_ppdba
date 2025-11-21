@@ -16,6 +16,17 @@
         height: 300px;
         width: 100%;
     }
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
 </style>
 @endsection
 
@@ -26,12 +37,6 @@
         <i class="fas fa-download fa-sm"></i> Export Laporan
     </button>
     <div class="dropdown-menu">
-        <a class="dropdown-item" href="#" onclick="exportReport('excel')">
-            <i class="fas fa-file-excel text-success"></i> Export Excel
-        </a>
-        <a class="dropdown-item" href="#" onclick="exportReport('csv')">
-            <i class="fas fa-file-csv text-info"></i> Export CSV
-        </a>
         <a class="dropdown-item" href="#" onclick="exportReport('pdf')">
             <i class="fas fa-file-pdf text-danger"></i> Export PDF
         </a>
@@ -41,7 +46,6 @@
         </a>
     </div>
 </div>
-
 <!-- Statistics Row -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">
@@ -275,10 +279,17 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ route('admin.monitoring.pendaftar.detail', $pendaftar->id) }}" 
-                               class="btn btn-info btn-sm" title="Detail">
-                                <i class="fas fa-eye"></i>
-                            </a>
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                        data-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cog"></i> Aksi
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{{ route('admin.monitoring.pendaftar.detail', $pendaftar->id) }}">
+                                        <i class="fas fa-eye text-info"></i> Lihat Detail
+                                    </a>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     @empty
@@ -292,7 +303,7 @@
         
         <!-- Pagination -->
         <div class="d-flex justify-content-center">
-            {{ $pendaftars->links() }}
+            {{ $pendaftars->links('custom.pagination') }}
         </div>
     </div>
 </div>

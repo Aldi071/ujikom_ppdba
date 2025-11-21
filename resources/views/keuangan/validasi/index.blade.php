@@ -1,6 +1,26 @@
 {{-- resources/views/keuangan/validasi/index.blade.php --}}
 @extends('keuangan.layouts.admin')
 
+@php
+use Illuminate\Support\Facades\DB;
+@endphp
+
+@section('styles')
+<style>
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 8px;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container-fluid">
 
@@ -102,7 +122,15 @@
                     </thead>
                     <tbody>
                         @forelse($pendaftars as $pendaftar)
-                        <tr>
+                        @php
+                            // Cek apakah ini reupload
+                            $berkasInfo = DB::table('pendaftar_berkas')
+                                ->where('pendaftar_id', $pendaftar->id)
+                                ->where('jenis', 'BUKTI_BAYAR')
+                                ->first();
+                            $isReupload = $berkasInfo && strpos($berkasInfo->catatan, 'REUPLOAD') !== false;
+                        @endphp
+                        <tr {{ $isReupload ? 'style="background-color: #fffbeb;"' : '' }}>
                             <td>{{ $pendaftar->no_pendaftaran }}</td>
                             <td>{{ $pendaftar->nama }}</td>
                             <td>{{ $pendaftar->jurusan }}</td>
@@ -110,13 +138,26 @@
                             <td>Rp {{ number_format($pendaftar->biaya_daftar, 0, ',', '.') }}</td>
                             <td>{{ \Carbon\Carbon::parse($pendaftar->tanggal_daftar)->format('d/m/Y H:i') }}</td>
                             <td>
-                                <span class="badge badge-warning">Menunggu Pembayaran</span>
+                                @if($isReupload)
+                                    <span class="badge badge-warning">
+                                        <i class="fas fa-redo"></i> Reupload
+                                    </span>
+                                @else
+                                    <span class="badge badge-warning">Menunggu Pembayaran</span>
+                                @endif
                             </td>
                             <td>
-                                <a href="{{ route('keuangan.validasi.detail', $pendaftar->id) }}" 
-                                   class="btn btn-sm btn-primary" title="Validasi">
-                                    <i class="fas fa-check-circle"></i> Validasi
-                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" 
+                                            data-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cog"></i> Aksi
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="{{ route('keuangan.validasi.detail', $pendaftar->id) }}">
+                                            <i class="fas fa-check-circle text-success"></i> Validasi Pembayaran
+                                        </a>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                         @empty
@@ -130,7 +171,7 @@
             
             <!-- Pagination -->
             <div class="d-flex justify-content-center">
-                {{ $pendaftars->links() }}
+                {{ $pendaftars->links('custom.pagination') }}
             </div>
         </div>
     </div>
