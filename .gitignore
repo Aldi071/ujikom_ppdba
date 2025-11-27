@@ -21,3 +21,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+# Additional files to ignore
+/public/video/
+/database/database.sqlite
+*.log
